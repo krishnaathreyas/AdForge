@@ -34,15 +34,16 @@ class HomeScreen extends StatelessWidget {
               Container(
                 height: 180,
                 width: double.infinity,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1F1F3A),
+                child: ClipRRect(
+                  // This makes your image have the same rounded corners
                   borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Center(
-                  child: Icon(Icons.image, color: Colors.white30, size: 80),
+                  child: Image.asset(
+                    'assets/stock1.png', // <-- IMPORTANT: Make sure the extension (.png, .jpg, etc.) is correct
+                    fit: BoxFit
+                        .cover, // This makes the image fill the space nicely
+                  ),
                 ),
               ),
-
               const SizedBox(height: 30),
               const Text(
                 'Forge Your Local Ads',
