@@ -1,98 +1,109 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class AppTheme {
-  // Define colors for the "Samsung Tech Blue" Light Theme
-  static const Color _lightPrimaryColor =
-      Color(0xFF0C4DA2); // Samsung-like Blue
-  static const Color _lightSecondaryColor =
-      Color(0xFF5F6368); // Professional Gray
-  static const Color _lightSurfaceColor = Color(0xFFF5F7F9); // Clean Off-White
-  static const Color _lightErrorColor = Color(0xFFB00020);
+  // Color Constants
+  static const Color primaryDark = Color(0xFF0F0F23);
+  static const Color cardDark = Color(0xFF1F1F3A);
+  static const Color borderDark = Color(0xFF2A2A4E);
+  static const Color accentPurple = Color(0xFF6366F1);
+  static const Color textPrimary = Colors.white;
+  static const Color textSecondary = Colors.grey;
 
-  // Define colors for the "Samsung Tech Blue" Dark Theme
-  static const Color _darkPrimaryColor =
-      Color(0xFF4A90E2); // Lighter, vibrant blue for dark mode
-  static const Color _darkSecondaryColor =
-      Color(0xFFB0B0B0); // Light Gray for accents
-  static const Color _darkSurfaceColor =
-      Color(0xFF121212); // Standard dark surface
-  static const Color _darkErrorColor = Color(0xFFCF6679);
-
-  // --- LIGHT THEME ---
-  static final ThemeData lightTheme =
-      ThemeData.light(useMaterial3: true).copyWith(
-    colorScheme: const ColorScheme.light(
-      primary: _lightPrimaryColor,
-      secondary: _lightSecondaryColor,
-      surface: _lightSurfaceColor,
-      error: _lightErrorColor,
-      onPrimary: Colors.white,
-      onSecondary: Colors.white,
-      onSurface: Colors.black,
-      onError: Colors.white,
-    ),
-    scaffoldBackgroundColor: _lightSurfaceColor,
-    appBarTheme: const AppBarTheme(
-      centerTitle: true,
-      elevation: 0,
-      backgroundColor: Colors.transparent,
-      foregroundColor: _lightPrimaryColor,
-    ),
-    elevatedButtonTheme: ElevatedButtonThemeData(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: _lightPrimaryColor,
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+  // Dark Theme
+  static ThemeData get darkTheme {
+    return ThemeData(
+      brightness: Brightness.dark,
+      primarySwatch: Colors.purple,
+      scaffoldBackgroundColor: primaryDark,
+      appBarTheme: const AppBarTheme(
+        backgroundColor: primaryDark,
+        elevation: 0,
+        systemOverlayStyle: SystemUiOverlayStyle.light,
+        titleTextStyle: TextStyle(
+          color: textPrimary,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
         ),
       ),
-    ),
-    // THIS IS THE CORRECTED LINE
-    cardTheme: CardThemeData(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-    ),
-  );
-
-  // --- DARK THEME ---
-  static final ThemeData darkTheme =
-      ThemeData.dark(useMaterial3: true).copyWith(
-    colorScheme: const ColorScheme.dark(
-      primary: _darkPrimaryColor,
-      secondary: _darkSecondaryColor,
-      surface: _darkSurfaceColor,
-      error: _darkErrorColor,
-      onPrimary: Colors.black,
-      onSecondary: Colors.black,
-      onSurface: Colors.white,
-      onError: Colors.black,
-    ),
-    scaffoldBackgroundColor: _darkSurfaceColor,
-    appBarTheme: const AppBarTheme(
-      centerTitle: true,
-      elevation: 0,
-      backgroundColor: Colors.transparent,
-    ),
-    elevatedButtonTheme: ElevatedButtonThemeData(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: _darkPrimaryColor,
-        foregroundColor: Colors.black,
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: accentPurple,
+          foregroundColor: textPrimary,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
         ),
       ),
-    ),
-    // THIS IS THE CORRECTED LINE
-    cardTheme: CardThemeData(
-      elevation: 2,
-      color: const Color(0xFF1E1E1E), // Slightly lighter than background
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: textPrimary,
+          side: const BorderSide(color: borderDark),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
       ),
-    ),
-  );
+      textTheme: const TextTheme(
+        headlineLarge: TextStyle(
+          color: textPrimary,
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+        ),
+        headlineMedium: TextStyle(
+          color: textPrimary,
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+        ),
+        headlineSmall: TextStyle(
+          color: textPrimary,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        ),
+        bodyLarge: TextStyle(
+          color: textPrimary,
+          fontSize: 16,
+        ),
+        bodyMedium: TextStyle(
+          color: textSecondary,
+          fontSize: 14,
+        ),
+        bodySmall: TextStyle(
+          color: textSecondary,
+          fontSize: 12,
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: cardDark,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        hintStyle: const TextStyle(
+          color: textSecondary,
+        ),
+      ),
+    );
+  }
+
+  // Light Theme (for Scanner Screen)
+  static ThemeData get lightTheme {
+    return ThemeData(
+      brightness: Brightness.light,
+      primarySwatch: Colors.purple,
+      scaffoldBackgroundColor: Colors.white,
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
+        titleTextStyle: TextStyle(
+          color: Colors.black,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
 }
