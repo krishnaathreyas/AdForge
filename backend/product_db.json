@@ -1,0 +1,13 @@
+{
+    "PROD-WW12T504DAB": {
+      "productName": "Bespoke AI™ EcoBubble™ Washer",
+      "keyFeatures": [
+        "AI Control Panel",
+        "EcoBubble Technology",
+        "Hygiene Steam Cycle"
+      ],
+      "brandTemplates": {
+        "monsoon_sale": "s3://ad-forge-database-amg-2025/videos/template_monsoon.mp4"
+      }
+    }
+  }
