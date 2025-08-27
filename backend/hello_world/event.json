@@ -1,6 +1,5 @@
 {
-    "queryStringParameters": {
-      "sku": "PROD-WW12T504DAB",
-      "context": "A special monsoon sale for families in Bengaluru"
-    }
+    "body": "{\"sku\": \"PROD-WW12T504DAB\", \"context\": \"A special monsoon sale for families in Bengaluru\"}"
   }
+
+  

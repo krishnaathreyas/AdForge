@@ -5,8 +5,8 @@ codeuri = "/Users/abhinavgurkar/Desktop/Adforge/backend/hello_world"
 runtime = "python3.13"
 architecture = "x86_64"
 handler = "app.lambda_handler"
-manifest_hash = "3298f13049d19cffaa37ca931dd4d421"
+manifest_hash = "cdadac67a98f400801017e0422ea0685"
 packagetype = "Zip"
-functions = ["HelloWorldFunction"]
+functions = ["AdForgeFunction"]
 
 [layer_build_definitions]
