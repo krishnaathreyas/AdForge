@@ -1,76 +1,64 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  backend
+  Final SAM Template for Ad-Forge Backend
 
-  Sample SAM Template for backend
-
-# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
-    Timeout: 300
-
-    # You can add LoggingConfig parameters such as the Logformat, Log Group, and SystemLogLevel or ApplicationLogLevel. Learn more here https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html#sam-function-loggingconfig.
+    Timeout: 900 # Set to max for long video renders
     LoggingConfig:
       LogFormat: JSON
+
 Resources:
   AdForgeFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Type: AWS::Serverless::Function
     Properties:
       CodeUri: hello_world/
       Handler: app.lambda_handler
-      Runtime: python3.13
+      Runtime: python3.13 # Using a stable, supported runtime
       Architectures:
-      - x86_64
+        - x86_64
       MemorySize: 512
       Events:
         AdForgeApi:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Type: Api
           Properties:
             Path: /forge
             Method: post
-      
       Environment:
         Variables:
-          PRODUCT_DB_BUCKET: !Ref ProductDatabaseBucket
+          # We now directly provide the name of the existing bucket
+          PRODUCT_DB_BUCKET: "ad-forge-database-amg-2025"
           OPENROUTER_API_KEY_PARAM: /ad-forge/openrouter-api-key
-          ELEVENLABS_API_KEY_PARAM: /ad-forge/elevenlabs-api-key 
+          ELEVENLABS_API_KEY_PARAM: /ad-forge/elevenlabs-api-key
           SHOTSTACK_API_KEY_PARAM: /ad-forge/shotstack-api-key
           HF_TOKEN_PARAM: /ad-forge/hf-token
-
-      # This section gives our function permission to read from the S3 bucket
       Policies:
+        # Policies now refer directly to the existing bucket name
         - S3ReadPolicy:
-            BucketName: !Ref ProductDatabaseBucket
-        - S3WritePolicy: # <-- Add this policy to allow writing the audio file
-            BucketName: !Ref ProductDatabaseBucket
-        - SSMReadPolicy:
-            ParameterName: /ad-forge/openrouter-api-key
-        - SSMReadPolicy: # <-- Add this policy
-            ParameterName: /ad-forge/elevenlabs-api-key
-        - SSMReadPolicy: # <-- Add this policy
-            ParameterName: /ad-forge/shotstack-api-key
-        - SSMReadPolicy:
-            ParameterName: /ad-forge/hf-token
-        
+            BucketName: "ad-forge-database-amg-2025"
+        - S3WritePolicy:
+            BucketName: "ad-forge-database-amg-2025"
+        - Statement:
+          - Effect: Allow
+            Action:
+              - ssm:GetParameter
+            Resource:
+              - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/ad-forge/hf-token"
+              - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/ad-forge/elevenlabs-api-key"
+              - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/ad-forge/shotstack-api-key"
+              - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/ad-forge/openrouter-api-key"
 
-  ProductDatabaseBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      # IMPORTANT: Replace this with the unique bucket name you created
-      BucketName: ad-forge-database-amg-2025
+  # The 'ProductDatabaseBucket' resource block has been completely removed
+  # to prevent the "already exists" error.
 
 Outputs:
-  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
-  # Find out more about other implicit resources you can reference within SAM
-  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
-  HelloWorldApi:
-    Description: API Gateway endpoint URL for Prod stage for Hello World 
-      function
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"
-  HelloWorldFunction:
-    Description: Hello World Lambda Function ARN
-    Value: !GetAtt HelloWorldFunction.Arn
-  HelloWorldFunctionIamRole:
-    Description: Implicit IAM Role created for Hello World function
-    Value: !GetAtt HelloWorldFunctionRole.Arn
+  AdForgeApi:
+    Description: "API Gateway endpoint URL for Ad-Forge function"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/forge/"
+  AdForgeFunctionArn:
+    Description: "Ad-Forge Lambda Function ARN"
+    Value: !GetAtt AdForgeFunction.Arn
+  AdForgeFunctionIamRoleArn:
+    Description: "Implicit IAM Role created for Ad-Forge function"
+    Value: !GetAtt AdForgeFunctionRole.Arn

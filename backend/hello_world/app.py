@@ -24,9 +24,10 @@ def generate_ad_blueprint(product_data, user_context, api_key):
     """Generates a structured JSON ad blueprint using an LLM."""
     
     prompt = f"""
-    You are an expert creative director for a Samsung ad. Your task is to generate a complete blueprint for a 15-second video ad.
+    You are an expert creative director for a Samsung ad. The total ad length will be 20 seconds. The final 2 seconds will be a silent branding outro.
+    Your task is to generate a blueprint for the first 18 seconds.
     The ad should have a 3-act structure. For each act, create a short, vivid, visual prompt suitable for a text-to-video AI model.
-    Also, write a single, cohesive voiceover script that spans all three acts.
+    Also, write a single, cohesive voiceover script that spans all three acts and that is timed to last approximately 17-18 seconds, ensuring it ends naturally before the final branding shot.
 
     Product Name: {product_data.get('productName')}
     User Context: {user_context}
@@ -91,24 +92,23 @@ def generate_video_clip(prompt, hf_client, results_list, index):
         print(f"Error generating clip {index+1}: {e}")
         results_list[index] = None
 
-def generate_final_video(clips, audio_url, api_key):
-    """Submits the final video editing job to Shotstack."""
-    # ... (This function is now renamed from generate_video to be more specific)
+def generate_final_video(clips, voiceover_url, music_url, api_key):
+    """Submits the final, multi-track video editing job to Shotstack."""
+    print("Assembling final, multi-track video with Shotstack...")
     url = "https://api.shotstack.io/v1/render"
     headers = {"x-api-key": api_key, "Content-Type": "application/json"}
-    payload = {"timeline": {"tracks": [{"clips": clips}]}, "output": {"format": "mp4", "resolution": "hd"}}
-    if audio_url:
-        total_length = sum(c.get('length', 0) for c in clips) # Calculate total video length
-        audio_track = {
-            "clips": [
-                {
-                    "asset": {"type": "audio", "src": audio_url},
-                    "start": 0,
-                    "length": total_length 
-                }
-            ]
-        }
-        payload["timeline"]["tracks"].append(audio_track)
+
+    total_video_length = sum(c.get('length', 0) for c in clips)
+    video_track = {"clips": clips}
+    voiceover_track = {"clips": [{"asset": {"type": "audio", "src": voiceover_url, "volume": 1}, "start": 0, "length": total_video_length}]}
+    music_track = {"clips": [{"asset": {"type": "audio", "src": music_url, "volume": 0.2}, "start": 0, "length": total_video_length}]} # Music at 20% volume
+
+    payload = {
+        "timeline": {
+            "tracks": [video_track, voiceover_track, music_track]
+        },
+        "output": {"format": "mp4", "resolution": "hd"}
+    }
     
     response = requests.post(url, headers=headers, json=payload)
     if response.status_code != 201:
@@ -194,16 +194,20 @@ def lambda_handler(event, context):
         samsung_logo_key = "curated_clips/samsung_name.mp4" # Assuming it's in this folder
         samsung_logo_url = s3.generate_presigned_url('get_object', Params={'Bucket': bucket_name, 'Key': samsung_logo_key}, ExpiresIn=600)
 
+        music_key = "music/background_music.mp3"
+        music_url = s3.generate_presigned_url('get_object', Params={'Bucket': bucket_name, 'Key': music_key}, ExpiresIn=600)
+
+
         # Create the timeline for Shotstack
         timeline_clips = [
             {"asset": {"type": "video", "src": video_clip_urls[0]}, "start": 0, "length": 5},
-            {"asset": {"type": "video", "src": product_shot_url}, "start": 5, "length": 3},
+            {"asset": {"type": "video", "src": product_shot_url, "volume": 0}, "start": 5, "length": 3},
             {"asset": {"type": "video", "src": video_clip_urls[1]}, "start": 8, "length": 5},
             {"asset": {"type": "video", "src": video_clip_urls[2]}, "start": 13, "length": 5},
             {"asset": {"type": "video", "src": samsung_logo_url}, "start": 18, "length": 2},
         ]
         
-        final_video_url = generate_final_video(timeline_clips, voiceover_url, shotstack_key)
+        final_video_url = generate_final_video(timeline_clips, voiceover_url, music_url, shotstack_key)
 
         print("Successfully generated final video.")
         return {"statusCode": 200, "body": json.dumps({"finalVideoUrl": final_video_url})}
