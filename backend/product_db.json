@@ -6,5 +6,9 @@
     "PROD-S24ULTRA": {
       "productName": "Galaxy S24 Ultra",
       "product_shot_url": "s3://ad-forge-database-amg-2025/curated_clips/s24_camera_shot.mp4"
+    },
+    "PROD-QN900D-TV": {
+      "productName": "Samsung Neo QLED 8K TV",
+      "product_shot_url": "s3://ad-forge-database-amg-2025/curated_clips/neo_qled_hero_shot.mp4"
     }
   }
