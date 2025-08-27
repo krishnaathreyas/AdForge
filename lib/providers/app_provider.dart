@@ -8,38 +8,20 @@ class AppProvider with ChangeNotifier {
   int _selectedIndex = 0;
   int get selectedIndex => _selectedIndex;
 
-  // Scanned Product Data
+  // App Data State
   Product? _scannedProduct;
   Product? get scannedProduct => _scannedProduct;
 
-  // Marketing Context
   String _marketingContext = '';
   String get marketingContext => _marketingContext;
 
-  // Generated Video Data
   String? _generatedVideoUrl;
   String? get generatedVideoUrl => _generatedVideoUrl;
+
   bool _isGeneratingVideo = false;
   bool get isGeneratingVideo => _isGeneratingVideo;
 
-  // Recent Activities
-  List<ActivityItem> _recentActivities = [
-    // Initial placeholder data
-    ActivityItem(
-      icon: Icons.play_circle_outline,
-      iconColor: Colors.blue,
-      title: 'Ad Generated',
-      subtitle: 'Dining Ad for Samsung',
-      time: '5 min ago',
-    ),
-    ActivityItem(
-      icon: Icons.qr_code_2,
-      iconColor: Colors.purple,
-      title: 'Product Scanned',
-      subtitle: 'Samsung Galaxy S24 Ultra',
-      time: 'Yesterday',
-    ),
-  ];
+  List<ActivityItem> _recentActivities = [];
   List<ActivityItem> get recentActivities => _recentActivities;
 
   // --- METHODS ---
@@ -55,6 +37,7 @@ class AppProvider with ChangeNotifier {
   }
 
   Future<void> setScannedProduct(Product product) async {
+    // <-- Made this async
     _scannedProduct = product;
     addActivity(ActivityItem(
       icon: Icons.qr_code_2,
@@ -64,8 +47,9 @@ class AppProvider with ChangeNotifier {
       time: 'Just now',
     ));
     notifyListeners();
-    // Simulate a small delay before navigating
-    await Future.delayed(const Duration(milliseconds: 500));
+    // Simulate a small delay for a smoother transition before navigating
+    await Future.delayed(
+        const Duration(milliseconds: 500)); // <-- Added a small delay
     goToTab(2); // Automatically go to Context screen
   }
 
@@ -74,13 +58,16 @@ class AppProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // This is the main method that calls our real backend
   Future<bool> generateVideo() async {
-    if (scannedProduct == null) return false;
+    if (_scannedProduct == null) return false;
 
     _isGeneratingVideo = true;
+    _generatedVideoUrl = null;
     notifyListeners();
 
-    final url = await ApiService.generateContextualVideo(
+    // Call the REAL ApiService method
+    final url = await ApiService.generateRealVideo(
         product: _scannedProduct!, context: _marketingContext);
 
     _generatedVideoUrl = url;
@@ -104,14 +91,13 @@ class AppProvider with ChangeNotifier {
     _scannedProduct = null;
     _marketingContext = '';
     _generatedVideoUrl = null;
-    goToTab(0); // Go back to home
+    goToTab(0);
     notifyListeners();
   }
 
   void addActivity(ActivityItem activity) {
     _recentActivities.insert(0, activity);
     if (_recentActivities.length > 5) {
-      // Keep list size manageable
       _recentActivities.removeLast();
     }
     notifyListeners();
