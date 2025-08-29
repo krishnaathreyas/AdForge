@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
+import '../models/product.dart';
 
 class ContextScreen extends StatefulWidget {
   const ContextScreen({super.key});
@@ -11,6 +12,8 @@ class ContextScreen extends StatefulWidget {
 
 class _ContextScreenState extends State<ContextScreen> {
   final TextEditingController _contextController = TextEditingController();
+
+  bool _isButtonLoading = false;
 
   final List<String> _suggestions = [
     'Student Discounts',
@@ -35,21 +38,57 @@ class _ContextScreenState extends State<ContextScreen> {
     super.dispose();
   }
 
-  Future<void> _generateAd() async {
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1F1F3A),
+        title: const Row(
+          children: [
+            Icon(Icons.error_outline, color: Colors.red),
+            SizedBox(width: 10),
+            Text('Uh-Oh!', style: TextStyle(color: Colors.white)),
+          ],
+        ),
+        content: Text(
+          'An error occurred while trying to start the ad generation. Please try again.',
+          style: const TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text(
+              'OK',
+              style: TextStyle(
+                  color: Color(0xFF6366F1), fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // This is the updated method with full error handling
+  Future<void> _handleGenerateAd() async {
     FocusScope.of(context).unfocus();
+
+    // Start the button's loading spinner
+    setState(() => _isButtonLoading = true);
+
     final provider = context.read<AppProvider>();
-    provider.setMarketingContext(_contextController.text);
+    provider.setMarketingContext(_contextController.text.trim());
 
-    final success = await provider.generateVideo();
+    // Call the provider. The provider will handle navigation on success.
+    final bool success = await provider.startVideoGeneration();
 
-    if (mounted && success) {
-      provider.goToTab(3); // Navigate to Results
-    } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Error generating video.'),
-            backgroundColor: Colors.red),
-      );
+    // Stop the button's loading spinner
+    if (mounted) {
+      setState(() => _isButtonLoading = false);
+    }
+
+    // If it failed to start, show our error pop-up
+    if (!success && mounted) {
+      _showErrorDialog(provider.error ?? "Failed to start job");
     }
   }
 
@@ -77,11 +116,7 @@ class _ContextScreenState extends State<ContextScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF0F0F23),
       appBar: AppBar(
-        title: const Text(
-          'Enter Marketing Context',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-        ),
-        centerTitle: true,
+        title: const Text('Enter Marketing Context'),
         automaticallyImplyLeading: false,
       ),
       body: SafeArea(
@@ -90,6 +125,48 @@ class _ContextScreenState extends State<ContextScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 25),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1F1F3A),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                      color: const Color(0xFF6366F1).withOpacity(0.5)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'SCANNED PRODUCT',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      product.name,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      product.description,
+                      style: TextStyle(
+                        color: Colors.grey.shade400,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               Text(
                 'Tell us about your local marketing needs:',
                 style: TextStyle(fontSize: 16, color: Colors.grey.shade400),
@@ -108,7 +185,7 @@ class _ContextScreenState extends State<ContextScreen> {
                   textAlignVertical: TextAlignVertical.top,
                   style: const TextStyle(color: Colors.white, fontSize: 16),
                   decoration: InputDecoration(
-                    hintText: 'e.g., \'Targeting young families...\'',
+                    hintText: 'e.g., \'A festive holiday ad for families...\'',
                     hintStyle:
                         TextStyle(color: Colors.grey.shade500, fontSize: 14),
                     border: InputBorder.none,
@@ -145,9 +222,13 @@ class _ContextScreenState extends State<ContextScreen> {
                 height: 60,
                 child: ElevatedButton(
                   onPressed: _contextController.text.trim().isEmpty ||
-                          provider.isGeneratingVideo
+                          provider.isGenerating
                       ? null
-                      : _generateAd,
+                      : () {
+                          provider.setMarketingContext(
+                              _contextController.text.trim());
+                          provider.startVideoGeneration();
+                        },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF6366F1),
                     disabledBackgroundColor: Colors.grey.shade800,
@@ -155,7 +236,7 @@ class _ContextScreenState extends State<ContextScreen> {
                       borderRadius: BorderRadius.circular(15),
                     ),
                   ),
-                  child: provider.isGeneratingVideo
+                  child: provider.isGenerating
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text(
                           'Generate Ad',

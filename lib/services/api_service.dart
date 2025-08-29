@@ -3,52 +3,61 @@ import 'package:http/http.dart' as http;
 import '../models/product.dart';
 
 class ApiService {
-  // Your real, deployed API Gateway endpoint URL
-  static const String apiUrl =
-      'https://y2fls39ue8.execute-api.ap-south-1.amazonaws.com/Prod/forge/';
+  static const String _baseUrl =
+      'https://y2fls39ue8.execute-api.ap-south-1.amazonaws.com/Prod';
 
-  // This is now the main method that calls your backend
-  static Future<String?> generateRealVideo({
+  /// Calls the /forge endpoint to start the video generation.
+  /// Expects the backend to immediately return a unique 'jobId'.
+  static Future<String?> startVideoGenerationJob({
     required Product product,
     required String context,
   }) async {
+    final Uri startJobUrl = Uri.parse('$_baseUrl/forge');
     try {
-      print("Sending request to backend...");
+      final headers = {'Content-Type': 'application/json'};
+      // The backend expects the key "user_context", not "context"
+      final body = json.encode({'sku': product.id, 'user_context': context});
 
-      final headers = {
-        'Content-Type': 'application/json',
-        // If your API Gateway requires an API Key, you would add it here
-        // 'x-api-key': 'YOUR_API_KEY_GOES_HERE'
-      };
+      print("🚀 POST /forge with payload: $body");
 
-      // The backend expects a JSON body with 'sku' and 'context'
-      final body = json.encode({
-        'sku': product.id, // We use the product's ID field as the SKU
-        'context': context,
-      });
+      final response =
+          await http.post(startJobUrl, headers: headers, body: body);
 
-      // Making the real POST request
-      final response = await http.post(
-        Uri.parse(apiUrl),
-        headers: headers,
-        body: body,
-      );
-
-      print("Backend responded with status code: ${response.statusCode}");
-      print("Backend response body: ${response.body}");
-
-      if (response.statusCode == 200) {
+      if (response.statusCode == 202) {
+        // 202 Accepted is the correct code here
         final responseData = json.decode(response.body);
-        // The backend returns a JSON with the key "finalVideoUrl"
-        return responseData['finalVideoUrl'];
+        print("✅ Job started successfully with ID: ${responseData['jobId']}");
+        return responseData['jobId'];
       } else {
-        // If the backend returns an error (4xx or 5xx), we'll know
-        print('API Error: ${response.statusCode}');
+        print(
+            "❌ Error starting job: ${response.statusCode} - ${response.body}");
         return null;
       }
     } catch (e) {
-      // This catches network errors, etc.
-      print('A network or parsing error occurred: $e');
+      print("❌ Network error while starting job: $e");
+      return null;
+    }
+  }
+
+  /// Calls the /status/{jobId} endpoint to check the job's progress.
+  static Future<Map<String, dynamic>?> checkJobStatus(
+      {required String jobId}) async {
+    final Uri statusUrl = Uri.parse('$_baseUrl/status/$jobId');
+    try {
+      print("...Polling GET /status/$jobId");
+      final response = await http.get(statusUrl);
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        print("...Status received: ${responseData['status']}");
+        return responseData;
+      } else {
+        print(
+            "❌ Error checking status: ${response.statusCode} - ${response.body}");
+        return null;
+      }
+    } catch (e) {
+      print("❌ Network error while checking status: $e");
       return null;
     }
   }
