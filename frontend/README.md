@@ -18,7 +18,7 @@ This is the official Flutter application for the Ad-Forge project, built for the
 ### ✨ Features
 
 * **Product Scanning:** Utilizes the device's camera to scan QR codes and identify products.
-* **Contextual Input:** Allows users to provide detailed marketing context, upload a store image for hyper-personalization, and select a regional location for dialect-specific voiceovers.
+* **Contextual Input:** Allows users to provide detailed marketing context, upload a store image for hyper-personalization
 * **Asynchronous Ad Generation:** Communicates with a powerful AWS backend to kick off a multi-stage AI video generation process.
 * **Real-time Status Polling:** Periodically checks the backend for the status of the video generation job and updates the UI in real-time.
 * **In-App Video Playback:** Displays the final, generated video ad with playback controls.
