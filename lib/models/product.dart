@@ -1,5 +1,5 @@
 class Product {
-  final String id;
+  final String id; // This will be used as the SKU
   final String name;
   final String brand;
   final String category;
@@ -19,6 +19,7 @@ class Product {
     required this.price,
   });
 
+  // This factory constructor remains the same, it's for parsing JSON if needed
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
       id: json['id'] ?? '',
@@ -32,50 +33,51 @@ class Product {
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'brand': brand,
-      'category': category,
-      'description': description,
-      'features': features,
-      'imageUrl': imageUrl,
-      'price': price,
-    };
-  }
-
-  // Sample products for demo
+  // --- THIS IS THE UPDATED PART ---
+  // The sample products now use the exact SKUs from your backend database
   static List<Product> get sampleProducts => [
         Product(
-          id: '1',
+          id: 'PROD-S24ULTRA', // Correct SKU from your DB
           name: 'Galaxy S24 Ultra',
           brand: 'Samsung',
           category: 'Smartphone',
-          description: 'Premium smartphone with AI-powered camera and S Pen',
+          description: 'Premium smartphone with AI-powered camera and S Pen.',
           features: [
             'AI-Enhanced Camera',
             'S Pen Integration',
             '5G Connectivity',
-            'Long Battery Life',
           ],
-          imageUrl: 'https://example.com/galaxy-s24-ultra.jpg',
-          price: 1199.99,
+          imageUrl: '',
+          price: 1299.99,
         ),
         Product(
-          id: '2',
-          name: 'Galaxy Z Fold5',
+          id: 'PROD-WW12T504DAB', // Correct SKU from your DB
+          name: 'Bespoke AI™ EcoBubble™ Washer',
           brand: 'Samsung',
-          category: 'Foldable Phone',
-          description: 'Innovative foldable smartphone for multitasking',
+          category: 'Home Appliance',
+          description: 'Smart washing machine with AI-powered energy savings.',
           features: [
-            'Foldable Display',
-            'Multitasking Capabilities',
-            'Durability Enhanced',
-            'Premium Design',
+            'EcoBubble Technology',
+            'AI Energy Mode',
+            'SpaceMax Design',
           ],
-          imageUrl: 'https://example.com/galaxy-fold5.jpg',
-          price: 1799.99,
+          imageUrl: '',
+          price: 899.99,
+        ),
+        Product(
+          id: 'PROD-QN900D-TV', // Correct SKU from your DB
+          name: 'Samsung Neo QLED 8K TV',
+          brand: 'Samsung',
+          category: 'Television',
+          description:
+              'Experience stunning detail with 8K resolution and AI upscaling.',
+          features: [
+            '8K Resolution',
+            'Quantum Matrix Technology',
+            'AI Upscaling',
+          ],
+          imageUrl: '',
+          price: 4999.99,
         ),
       ];
 }

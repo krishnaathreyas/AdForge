@@ -1,32 +1,64 @@
-import 'dart:math';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../models/product.dart';
 
 class ApiService {
-  // This method simulates fetching a product by its barcode
-  static Future<Product?> fetchProductByBarcode(String barcode) async {
-    // Simulate a network delay
-    await Future.delayed(const Duration(seconds: 2));
+  static const String _baseUrl =
+      'https://y2fls39ue8.execute-api.ap-south-1.amazonaws.com/Prod';
 
-    // In a real app, you would look up the barcode. Here, we just pick a random sample.
-    final products = Product.sampleProducts;
-    return products[Random().nextInt(products.length)];
-  }
-
-  // This method simulates the AI video generation process
-  static Future<String?> generateContextualVideo({
+  /// Calls the /forge endpoint to start the video generation.
+  /// Expects the backend to immediately return a unique 'jobId'.
+  static Future<String?> startVideoGenerationJob({
     required Product product,
     required String context,
   }) async {
-    // Simulate a long video generation delay
-    await Future.delayed(const Duration(seconds: 5));
+    final Uri startJobUrl = Uri.parse('$_baseUrl/forge');
+    try {
+      final headers = {'Content-Type': 'application/json'};
+      // The backend expects the key "user_context", not "context"
+      final body = json.encode({'sku': product.id, 'user_context': context});
 
-    // In a real app, you would call your ElevenLabs, GPT-4, etc. APIs here.
-    // For now, we return a random sample video URL.
-    final videoUrls = [
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
-    ];
+      print("🚀 POST /forge with payload: $body");
 
-    return videoUrls[Random().nextInt(videoUrls.length)];
+      final response =
+          await http.post(startJobUrl, headers: headers, body: body);
+
+      if (response.statusCode == 202) {
+        // 202 Accepted is the correct code here
+        final responseData = json.decode(response.body);
+        print("✅ Job started successfully with ID: ${responseData['jobId']}");
+        return responseData['jobId'];
+      } else {
+        print(
+            "❌ Error starting job: ${response.statusCode} - ${response.body}");
+        return null;
+      }
+    } catch (e) {
+      print("❌ Network error while starting job: $e");
+      return null;
+    }
+  }
+
+  /// Calls the /status/{jobId} endpoint to check the job's progress.
+  static Future<Map<String, dynamic>?> checkJobStatus(
+      {required String jobId}) async {
+    final Uri statusUrl = Uri.parse('$_baseUrl/status/$jobId');
+    try {
+      print("...Polling GET /status/$jobId");
+      final response = await http.get(statusUrl);
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        print("...Status received: ${responseData['status']}");
+        return responseData;
+      } else {
+        print(
+            "❌ Error checking status: ${response.statusCode} - ${response.body}");
+        return null;
+      }
+    } catch (e) {
+      print("❌ Network error while checking status: $e");
+      return null;
+    }
   }
 }

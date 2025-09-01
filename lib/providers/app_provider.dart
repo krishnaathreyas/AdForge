@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/product.dart';
 import '../services/api_service.dart';
@@ -8,65 +9,57 @@ class AppProvider with ChangeNotifier {
   int _selectedIndex = 0;
   int get selectedIndex => _selectedIndex;
 
-  // Scanned Product Data
+  // App Data State
   Product? _scannedProduct;
   Product? get scannedProduct => _scannedProduct;
-
-  // Marketing Context
   String _marketingContext = '';
   String get marketingContext => _marketingContext;
-
-  // Generated Video Data
   String? _generatedVideoUrl;
   String? get generatedVideoUrl => _generatedVideoUrl;
-  bool _isGeneratingVideo = false;
-  bool get isGeneratingVideo => _isGeneratingVideo;
 
-  // Recent Activities
-  List<ActivityItem> _recentActivities = [
-    // Initial placeholder data
-    ActivityItem(
-      icon: Icons.play_circle_outline,
-      iconColor: Colors.blue,
-      title: 'Ad Generated',
-      subtitle: 'Dining Ad for Samsung',
-      time: '5 min ago',
-    ),
-    ActivityItem(
-      icon: Icons.qr_code_2,
-      iconColor: Colors.purple,
-      title: 'Product Scanned',
-      subtitle: 'Samsung Galaxy S24 Ultra',
-      time: 'Yesterday',
-    ),
-  ];
+  bool _isGenerating = false;
+  bool get isGenerating => _isGenerating;
+  String _generationStatus = '';
+  String get generationStatus => _generationStatus;
+
+  String? _error;
+  String? get error => _error;
+
+  Timer? _pollingTimer;
+
+  List<ActivityItem> _recentActivities = [];
   List<ActivityItem> get recentActivities => _recentActivities;
 
-  // --- METHODS ---
+  @override
+  void dispose() {
+    _pollingTimer?.cancel();
+    pageController.dispose();
+    super.dispose();
+  }
 
   void goToTab(int index) {
     _selectedIndex = index;
-    pageController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeIn,
-    );
+    pageController.animateToPage(index,
+        duration: const Duration(milliseconds: 200), curve: Curves.easeIn);
+    notifyListeners();
+  }
+
+  void setPageIndex(int index) {
+    _selectedIndex = index;
     notifyListeners();
   }
 
   Future<void> setScannedProduct(Product product) async {
     _scannedProduct = product;
     addActivity(ActivityItem(
-      icon: Icons.qr_code_2,
-      iconColor: Colors.green,
-      title: 'Product Scanned',
-      subtitle: product.name,
-      time: 'Just now',
-    ));
+        icon: Icons.qr_code_2,
+        iconColor: Colors.green,
+        title: 'Product Scanned',
+        subtitle: product.name,
+        time: 'Just now'));
     notifyListeners();
-    // Simulate a small delay before navigating
     await Future.delayed(const Duration(milliseconds: 500));
-    goToTab(2); // Automatically go to Context screen
+    goToTab(2);
   }
 
   void setMarketingContext(String context) {
@@ -74,51 +67,92 @@ class AppProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> generateVideo() async {
-    if (scannedProduct == null) return false;
-
-    _isGeneratingVideo = true;
+  Future<bool> startVideoGeneration() async {
+    if (_scannedProduct == null) return false;
+    _isGenerating = true;
+    _generatedVideoUrl = null;
+    _generationStatus = "Kicking off the ad-forge engine...";
     notifyListeners();
 
-    final url = await ApiService.generateContextualVideo(
+    final jobId = await ApiService.startVideoGenerationJob(
         product: _scannedProduct!, context: _marketingContext);
 
-    _generatedVideoUrl = url;
-    _isGeneratingVideo = false;
-
-    if (url != null) {
-      addActivity(ActivityItem(
-        icon: Icons.play_circle_outline,
-        iconColor: Colors.green,
-        title: 'New Ad Generated',
-        subtitle: _scannedProduct?.name ?? 'Custom Product',
-        time: 'Just now',
-      ));
+    if (jobId != null) {
+      goToTab(3); // Immediately go to the results screen to show progress
+      _generationStatus = "Blueprint created, generating video clips...";
       notifyListeners();
+      _startPolling(jobId);
       return true;
+    } else {
+      _generationStatus = "Failed to start generation job.";
+      _isGenerating = false;
+      _error = "Could not start the job. Check backend connection.";
+      notifyListeners();
+      return false;
     }
-    return false;
+  }
+
+  void _startPolling(String jobId) {
+    _pollingTimer?.cancel();
+    _pollingTimer = Timer.periodic(const Duration(seconds: 10), (timer) async {
+      // Timeout after 5 minutes
+      if (timer.tick > 20) {
+        _generationStatus =
+            "Generation is taking too long. Please try again later.";
+        _isGenerating = false;
+        timer.cancel();
+        notifyListeners();
+        return;
+      }
+
+      final statusResult = await ApiService.checkJobStatus(jobId: jobId);
+
+      if (statusResult != null) {
+        final status = statusResult['status'];
+        if (status == 'COMPLETE') {
+          _generatedVideoUrl = statusResult['finalVideoUrl'];
+          _isGenerating = false;
+          _generationStatus = "Complete!";
+          timer.cancel();
+          addActivity(ActivityItem(
+              icon: Icons.play_circle_outline,
+              iconColor: Colors.green,
+              title: 'New Ad Generated',
+              subtitle: _scannedProduct?.name ?? 'Custom Product',
+              time: 'Just now'));
+        } else if (status == 'FAILED') {
+          _generationStatus = "Video generation failed.";
+          _error = "The backend process failed during generation.";
+          _isGenerating = false;
+          timer.cancel();
+        } else {
+          _generationStatus = "Status: ${status ?? 'Processing...'}";
+        }
+      } else {
+        _generationStatus = "Error checking status. Retrying...";
+      }
+      notifyListeners();
+    });
   }
 
   void resetFlow() {
+    _pollingTimer?.cancel();
     _scannedProduct = null;
     _marketingContext = '';
     _generatedVideoUrl = null;
-    goToTab(0); // Go back to home
+    _isGenerating = false;
+    _generationStatus = '';
+    goToTab(0);
     notifyListeners();
   }
 
   void addActivity(ActivityItem activity) {
     _recentActivities.insert(0, activity);
-    if (_recentActivities.length > 5) {
-      // Keep list size manageable
-      _recentActivities.removeLast();
-    }
+    if (_recentActivities.length > 5) _recentActivities.removeLast();
     notifyListeners();
   }
 }
 
-// Helper class for activity items
 class ActivityItem {
   final IconData icon;
   final Color iconColor;

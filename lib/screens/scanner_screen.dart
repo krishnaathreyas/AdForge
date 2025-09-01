@@ -25,13 +25,25 @@ class _ScannerScreenState extends State<ScannerScreen> {
     if (_isProcessing) return;
     setState(() => _isProcessing = true);
 
-    // For our demo, we'll just pick a random sample product
-    final product = Product.sampleProducts.first;
+    print("✅ QR Code Scanned. Raw Value: $barcodeValue");
 
-    // Use the provider to set the product and navigate
+    // THE FIX IS HERE: Find the product in our list that matches the scanned code.
+    // .firstWhere is used to find the first item in a list that satisfies a condition.
+    // orElse is a fallback in case the QR code is not in our sample list.
+    final product = Product.sampleProducts.firstWhere(
+      (p) => p.id == barcodeValue,
+      orElse: () {
+        print(
+            "⚠️ Scanned QR code not in sample list, using first product as fallback.");
+        return Product.sampleProducts.first;
+      },
+    );
+
+    print("✅ Using Product SKU: ${product.id} for the API call.");
+
+    // Use the provider to set the product
     await context.read<AppProvider>().setScannedProduct(product);
 
-    // Reset state if we come back to this screen
     if (mounted) {
       setState(() => _isProcessing = false);
     }
