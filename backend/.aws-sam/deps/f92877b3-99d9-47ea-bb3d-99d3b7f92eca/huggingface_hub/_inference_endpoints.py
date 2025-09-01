@@ -120,7 +120,11 @@ class InferenceEndpoint:
 
     @classmethod
     def from_raw(
-        cls, raw: Dict, namespace: str, token: Union[str, bool, None] = None, api: Optional["HfApi"] = None
+        cls,
+        raw: Dict,
+        namespace: str,
+        token: Union[str, bool, None] = None,
+        api: Optional["HfApi"] = None,
     ) -> "InferenceEndpoint":
         """Initialize object from raw dictionary."""
         if api is None:
@@ -181,7 +185,9 @@ class InferenceEndpoint:
             token=self._token,  # type: ignore[arg-type] # boolean token shouldn't be possible. In practice it's ok.
         )
 
-    def wait(self, timeout: Optional[int] = None, refresh_every: int = 5) -> "InferenceEndpoint":
+    def wait(
+        self, timeout: Optional[int] = None, refresh_every: int = 5
+    ) -> "InferenceEndpoint":
         """Wait for the Inference Endpoint to be deployed.
 
         Information from the server will be fetched every 1s. If the Inference Endpoint is not deployed after `timeout`
@@ -222,15 +228,21 @@ class InferenceEndpoint:
             if self.status == InferenceEndpointStatus.RUNNING and self.url is not None:
                 # Verify the endpoint is actually reachable
                 _health_url = f"{self.url.rstrip('/')}/{self.health_route.lstrip('/')}"
-                response = get_session().get(_health_url, headers=self._api._build_hf_headers(token=self._token))
+                response = get_session().get(
+                    _health_url, headers=self._api._build_hf_headers(token=self._token)
+                )
                 if response.status_code == 200:
                     logger.info("Inference Endpoint is ready to be used.")
                     return self
 
             if timeout is not None:
                 if time.time() - start > timeout:
-                    raise InferenceEndpointTimeoutError("Timeout while waiting for Inference Endpoint to be deployed.")
-            logger.info(f"Inference Endpoint is not deployed yet ({self.status}). Waiting {refresh_every}s...")
+                    raise InferenceEndpointTimeoutError(
+                        "Timeout while waiting for Inference Endpoint to be deployed."
+                    )
+            logger.info(
+                f"Inference Endpoint is not deployed yet ({self.status}). Waiting {refresh_every}s..."
+            )
             time.sleep(refresh_every)
             self.fetch()
 
@@ -358,7 +370,10 @@ class InferenceEndpoint:
             [`InferenceEndpoint`]: the same Inference Endpoint, mutated in place with the latest data.
         """
         obj = self._api.resume_inference_endpoint(
-            name=self.name, namespace=self.namespace, running_ok=running_ok, token=self._token
+            name=self.name,
+            namespace=self.namespace,
+            running_ok=running_ok,
+            token=self._token,
         )  # type: ignore [arg-type]
         self.raw = obj.raw
         self._populate_from_raw()

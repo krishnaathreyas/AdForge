@@ -3,7 +3,17 @@ import logging
 from contextlib import AsyncExitStack
 from datetime import timedelta
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, AsyncIterable, Dict, List, Literal, Optional, Union, overload
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    AsyncIterable,
+    Dict,
+    List,
+    Literal,
+    Optional,
+    Union,
+    overload,
+)
 
 from typing_extensions import NotRequired, TypeAlias, TypedDict, Unpack
 
@@ -89,7 +99,9 @@ class MCPClient:
         self.available_tools: List[ChatCompletionInputTool] = []
         # To be able to send the model in the payload if `base_url` is provided
         if model is None and base_url is None:
-            raise ValueError("At least one of `model` or `base_url` should be set in `MCPClient`.")
+            raise ValueError(
+                "At least one of `model` or `base_url` should be set in `MCPClient`."
+            )
         self.payload_model = model
         self.client = AsyncInferenceClient(
             model=None if base_url is not None else model,
@@ -115,13 +127,19 @@ class MCPClient:
         await self.exit_stack.aclose()
 
     @overload
-    async def add_mcp_server(self, type: Literal["stdio"], **params: Unpack[StdioServerParameters_T]): ...
+    async def add_mcp_server(
+        self, type: Literal["stdio"], **params: Unpack[StdioServerParameters_T]
+    ): ...
 
     @overload
-    async def add_mcp_server(self, type: Literal["sse"], **params: Unpack[SSEServerParameters_T]): ...
+    async def add_mcp_server(
+        self, type: Literal["sse"], **params: Unpack[SSEServerParameters_T]
+    ): ...
 
     @overload
-    async def add_mcp_server(self, type: Literal["http"], **params: Unpack[StreamableHTTPParameters_T]): ...
+    async def add_mcp_server(
+        self, type: Literal["http"], **params: Unpack[StreamableHTTPParameters_T]
+    ): ...
 
     async def add_mcp_server(self, type: ServerType, **params: Any):
         """Connect to an MCP server
@@ -159,14 +177,18 @@ class MCPClient:
             # Handle stdio server
             from mcp.client.stdio import stdio_client
 
-            logger.info(f"Connecting to stdio MCP server with command: {params['command']} {params.get('args', [])}")
+            logger.info(
+                f"Connecting to stdio MCP server with command: {params['command']} {params.get('args', [])}"
+            )
 
             client_kwargs = {"command": params["command"]}
             for key in ["args", "env", "cwd"]:
                 if params.get(key) is not None:
                     client_kwargs[key] = params[key]
             server_params = StdioServerParameters(**client_kwargs)
-            read, write = await self.exit_stack.enter_async_context(stdio_client(server_params))
+            read, write = await self.exit_stack.enter_async_context(
+                stdio_client(server_params)
+            )
         elif type == "sse":
             # Handle SSE server
             from mcp.client.sse import sse_client
@@ -177,7 +199,9 @@ class MCPClient:
             for key in ["headers", "timeout", "sse_read_timeout"]:
                 if params.get(key) is not None:
                     client_kwargs[key] = params[key]
-            read, write = await self.exit_stack.enter_async_context(sse_client(**client_kwargs))
+            read, write = await self.exit_stack.enter_async_context(
+                sse_client(**client_kwargs)
+            )
         elif type == "http":
             # Handle StreamableHTTP server
             from mcp.client.streamable_http import streamablehttp_client
@@ -188,7 +212,9 @@ class MCPClient:
             for key in ["headers", "timeout", "sse_read_timeout", "terminate_on_close"]:
                 if params.get(key) is not None:
                     client_kwargs[key] = params[key]
-            read, write, _ = await self.exit_stack.enter_async_context(streamablehttp_client(**client_kwargs))
+            read, write, _ = await self.exit_stack.enter_async_context(
+                streamablehttp_client(**client_kwargs)
+            )
             # ^ TODO: should be handle `get_session_id_callback`? (function to retrieve the current session ID)
         else:
             raise ValueError(f"Unsupported server type: {type}")
@@ -209,11 +235,15 @@ class MCPClient:
 
         # List available tools
         response = await session.list_tools()
-        logger.debug("Connected to server with tools:", [tool.name for tool in response.tools])
+        logger.debug(
+            "Connected to server with tools:", [tool.name for tool in response.tools]
+        )
 
         for tool in response.tools:
             if tool.name in self.sessions:
-                logger.warning(f"Tool '{tool.name}' already defined by another server. Skipping.")
+                logger.warning(
+                    f"Tool '{tool.name}' already defined by another server. Skipping."
+                )
                 continue
 
             # Map tool names to their server for later lookup
@@ -273,7 +303,11 @@ class MCPClient:
         # Read from stream
         async for chunk in response:
             num_of_chunks += 1
-            delta = chunk.choices[0].delta if chunk.choices and len(chunk.choices) > 0 else None
+            delta = (
+                chunk.choices[0].delta
+                if chunk.choices and len(chunk.choices) > 0
+                else None
+            )
             if not delta:
                 continue
 
@@ -289,16 +323,23 @@ class MCPClient:
                     # Aggregate chunks into tool calls
                     if tool_call.index not in final_tool_calls:
                         if (
-                            tool_call.function.arguments is None or tool_call.function.arguments == "{}"
+                            tool_call.function.arguments is None
+                            or tool_call.function.arguments == "{}"
                         ):  # Corner case (depends on provider)
                             tool_call.function.arguments = ""
                         final_tool_calls[tool_call.index] = tool_call
 
                     elif tool_call.function.arguments:
-                        final_tool_calls[tool_call.index].function.arguments += tool_call.function.arguments
+                        final_tool_calls[
+                            tool_call.index
+                        ].function.arguments += tool_call.function.arguments
 
             # Optionally exit early if no tools in first chunks
-            if exit_if_first_chunk_no_tool and num_of_chunks <= 2 and len(final_tool_calls) == 0:
+            if (
+                exit_if_first_chunk_no_tool
+                and num_of_chunks <= 2
+                and len(final_tool_calls) == 0
+            ):
                 return
 
             # Yield each chunk to caller
@@ -338,16 +379,27 @@ class MCPClient:
                     "name": function_name,
                     "content": f"Invalid JSON generated by the model: {err}",
                 }
-                tool_message_as_obj = ChatCompletionInputMessage.parse_obj_as_instance(tool_message)
+                tool_message_as_obj = ChatCompletionInputMessage.parse_obj_as_instance(
+                    tool_message
+                )
                 messages.append(tool_message_as_obj)
                 yield tool_message_as_obj
                 continue  # move to next tool call
 
-            tool_message = {"role": "tool", "tool_call_id": tool_call.id, "content": "", "name": function_name}
+            tool_message = {
+                "role": "tool",
+                "tool_call_id": tool_call.id,
+                "content": "",
+                "name": function_name,
+            }
 
             # Check if this is an exit loop tool
-            if exit_loop_tools and function_name in [t.function.name for t in exit_loop_tools]:
-                tool_message_as_obj = ChatCompletionInputMessage.parse_obj_as_instance(tool_message)
+            if exit_loop_tools and function_name in [
+                t.function.name for t in exit_loop_tools
+            ]:
+                tool_message_as_obj = ChatCompletionInputMessage.parse_obj_as_instance(
+                    tool_message
+                )
                 messages.append(tool_message_as_obj)
                 yield tool_message_as_obj
                 return
@@ -359,11 +411,17 @@ class MCPClient:
                     result = await session.call_tool(function_name, function_args)
                     tool_message["content"] = format_result(result)
                 except Exception as err:
-                    tool_message["content"] = f"Error: MCP tool call failed with error message: {err}"
+                    tool_message["content"] = (
+                        f"Error: MCP tool call failed with error message: {err}"
+                    )
             else:
-                tool_message["content"] = f"Error: No session found for tool: {function_name}"
+                tool_message["content"] = (
+                    f"Error: No session found for tool: {function_name}"
+                )
 
             # Yield tool message
-            tool_message_as_obj = ChatCompletionInputMessage.parse_obj_as_instance(tool_message)
+            tool_message_as_obj = ChatCompletionInputMessage.parse_obj_as_instance(
+                tool_message
+            )
             messages.append(tool_message_as_obj)
             yield tool_message_as_obj

@@ -158,7 +158,9 @@ class EvalResult:
 
     def __post_init__(self) -> None:
         if self.source_name is not None and self.source_url is None:
-            raise ValueError("If `source_name` is provided, `source_url` must also be provided.")
+            raise ValueError(
+                "If `source_name` is provided, `source_url` must also be provided."
+            )
 
 
 @dataclass
@@ -195,7 +197,9 @@ class CardData:
         """
         pass
 
-    def to_yaml(self, line_break=None, original_order: Optional[List[str]] = None) -> str:
+    def to_yaml(
+        self, line_break=None, original_order: Optional[List[str]] = None
+    ) -> str:
         """Dumps CardData to a YAML block for inclusion in a README.md file.
 
         Args:
@@ -208,7 +212,8 @@ class CardData:
         if original_order:
             self.__dict__ = {
                 k: self.__dict__[k]
-                for k in original_order + list(set(self.__dict__.keys()) - set(original_order))
+                for k in original_order
+                + list(set(self.__dict__.keys()) - set(original_order))
                 if k in self.__dict__
             }
         return yaml_dump(self.to_dict(), sort_keys=False, line_break=line_break).strip()
@@ -253,7 +258,9 @@ def _validate_eval_results(
         return []
     if isinstance(eval_results, EvalResult):
         eval_results = [eval_results]
-    if not isinstance(eval_results, list) or not all(isinstance(r, EvalResult) for r in eval_results):
+    if not isinstance(eval_results, list) or not all(
+        isinstance(r, EvalResult) for r in eval_results
+    ):
         raise ValueError(
             f"`eval_results` should be of type `EvalResult` or a list of `EvalResult`, got {type(eval_results)}."
         )
@@ -365,7 +372,9 @@ class ModelCardData(CardData):
                 self.eval_results = eval_results
             except (KeyError, TypeError) as error:
                 if ignore_metadata_errors:
-                    logger.warning("Invalid model-index. Not loading eval results into CardData.")
+                    logger.warning(
+                        "Invalid model-index. Not loading eval results into CardData."
+                    )
                 else:
                     raise ValueError(
                         f"Invalid `model_index` in metadata cannot be parsed: {error.__class__} {error}. Pass"
@@ -377,17 +386,23 @@ class ModelCardData(CardData):
 
         if self.eval_results:
             try:
-                self.eval_results = _validate_eval_results(self.eval_results, self.model_name)
+                self.eval_results = _validate_eval_results(
+                    self.eval_results, self.model_name
+                )
             except Exception as e:
                 if ignore_metadata_errors:
-                    logger.warning(f"Failed to validate eval_results: {e}. Not loading eval results into CardData.")
+                    logger.warning(
+                        f"Failed to validate eval_results: {e}. Not loading eval results into CardData."
+                    )
                 else:
                     raise ValueError(f"Failed to validate eval_results: {e}") from e
 
     def _to_dict(self, data_dict):
         """Format the internal data dict. In this case, we convert eval results to a valid model index"""
         if self.eval_results is not None:
-            data_dict["model-index"] = eval_results_to_model_index(self.model_name, self.eval_results)
+            data_dict["model-index"] = eval_results_to_model_index(
+                self.model_name, self.eval_results
+            )
             del data_dict["eval_results"], data_dict["model_name"]
 
 
@@ -552,7 +567,9 @@ class SpaceCardData(CardData):
         super().__init__(**kwargs)
 
 
-def model_index_to_eval_results(model_index: List[Dict[str, Any]]) -> Tuple[str, List[EvalResult]]:
+def model_index_to_eval_results(
+    model_index: List[Dict[str, Any]],
+) -> Tuple[str, List[EvalResult]]:
     """Takes in a model index and returns the model name and a list of `huggingface_hub.EvalResult` objects.
 
     A detailed spec of the model index can be found here:
@@ -663,12 +680,18 @@ def _remove_none(obj):
     if isinstance(obj, (list, tuple, set)):
         return type(obj)(_remove_none(x) for x in obj if x is not None)
     elif isinstance(obj, dict):
-        return type(obj)((_remove_none(k), _remove_none(v)) for k, v in obj.items() if k is not None and v is not None)
+        return type(obj)(
+            (_remove_none(k), _remove_none(v))
+            for k, v in obj.items()
+            if k is not None and v is not None
+        )
     else:
         return obj
 
 
-def eval_results_to_model_index(model_name: str, eval_results: List[EvalResult]) -> List[Dict[str, Any]]:
+def eval_results_to_model_index(
+    model_name: str, eval_results: List[EvalResult]
+) -> List[Dict[str, Any]]:
     """Takes in given model name and list of `huggingface_hub.EvalResult` and returns a
     valid model-index that will be compatible with the format expected by the
     Hugging Face Hub.

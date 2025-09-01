@@ -36,7 +36,11 @@ class TogetherTextGenerationTask(BaseTextGenerationTask):
     def __init__(self):
         super().__init__(provider=_PROVIDER, base_url=_BASE_URL)
 
-    def get_response(self, response: Union[bytes, Dict], request_params: Optional[RequestParameters] = None) -> Any:
+    def get_response(
+        self,
+        response: Union[bytes, Dict],
+        request_params: Optional[RequestParameters] = None,
+    ) -> Any:
         output = _as_dict(response)["choices"][0]
         return {
             "generated_text": output["text"],
@@ -52,13 +56,24 @@ class TogetherConversationalTask(BaseConversationalTask):
         super().__init__(provider=_PROVIDER, base_url=_BASE_URL)
 
     def _prepare_payload_as_dict(
-        self, inputs: Any, parameters: Dict, provider_mapping_info: InferenceProviderMapping
+        self,
+        inputs: Any,
+        parameters: Dict,
+        provider_mapping_info: InferenceProviderMapping,
     ) -> Optional[Dict]:
-        payload = super()._prepare_payload_as_dict(inputs, parameters, provider_mapping_info)
+        payload = super()._prepare_payload_as_dict(
+            inputs, parameters, provider_mapping_info
+        )
         response_format = parameters.get("response_format")
-        if isinstance(response_format, dict) and response_format.get("type") == "json_schema":
+        if (
+            isinstance(response_format, dict)
+            and response_format.get("type") == "json_schema"
+        ):
             json_schema_details = response_format.get("json_schema")
-            if isinstance(json_schema_details, dict) and "schema" in json_schema_details:
+            if (
+                isinstance(json_schema_details, dict)
+                and "schema" in json_schema_details
+            ):
                 payload["response_format"] = {  # type: ignore [index]
                     "type": "json_object",
                     "schema": json_schema_details["schema"],
@@ -72,7 +87,10 @@ class TogetherTextToImageTask(TogetherTask):
         super().__init__("text-to-image")
 
     def _prepare_payload_as_dict(
-        self, inputs: Any, parameters: Dict, provider_mapping_info: InferenceProviderMapping
+        self,
+        inputs: Any,
+        parameters: Dict,
+        provider_mapping_info: InferenceProviderMapping,
     ) -> Optional[Dict]:
         mapped_model = provider_mapping_info.provider_id
         parameters = filter_none(parameters)
@@ -81,8 +99,17 @@ class TogetherTextToImageTask(TogetherTask):
         if "guidance_scale" in parameters:
             parameters["guidance"] = parameters.pop("guidance_scale")
 
-        return {"prompt": inputs, "response_format": "base64", **parameters, "model": mapped_model}
+        return {
+            "prompt": inputs,
+            "response_format": "base64",
+            **parameters,
+            "model": mapped_model,
+        }
 
-    def get_response(self, response: Union[bytes, Dict], request_params: Optional[RequestParameters] = None) -> Any:
+    def get_response(
+        self,
+        response: Union[bytes, Dict],
+        request_params: Optional[RequestParameters] = None,
+    ) -> Any:
         response_dict = _as_dict(response)
         return base64.b64decode(response_dict["data"][0]["b64_json"])

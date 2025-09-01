@@ -33,7 +33,9 @@ from ._cli_utils import ANSI, show_deprecation_warning, tabulate
 class ScanCacheCommand(BaseHuggingfaceCLICommand):
     @staticmethod
     def register_subcommand(parser: _SubParsersAction):
-        scan_cache_parser = parser.add_parser("scan-cache", help="Scan cache directory.")
+        scan_cache_parser = parser.add_parser(
+            "scan-cache", help="Scan cache directory."
+        )
 
         scan_cache_parser.add_argument(
             "--dir",
@@ -168,7 +170,9 @@ def get_table(hf_cache_info: HFCacheInfo, *, verbosity: int = 0) -> str:
                     str(revision.snapshot_path),
                 ]
                 for repo in sorted(hf_cache_info.repos, key=lambda repo: repo.repo_path)
-                for revision in sorted(repo.revisions, key=lambda revision: revision.commit_hash)
+                for revision in sorted(
+                    repo.revisions, key=lambda revision: revision.commit_hash
+                )
             ],
             headers=[
                 "REPO ID",

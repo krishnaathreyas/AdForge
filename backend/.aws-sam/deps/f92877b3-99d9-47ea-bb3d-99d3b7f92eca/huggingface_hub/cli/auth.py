@@ -59,7 +59,9 @@ class AuthCommands(BaseHuggingfaceCLICommand):
     @staticmethod
     def register_subcommand(parser: _SubParsersAction):
         # Create the main 'auth' command
-        auth_parser = parser.add_parser("auth", help="Manage authentication (login, logout, etc.).")
+        auth_parser = parser.add_parser(
+            "auth", help="Manage authentication (login, logout, etc.)."
+        )
         auth_subparsers = auth_parser.add_subparsers(help="Authentication subcommands")
 
         # Show help if no subcommand is provided
@@ -97,7 +99,9 @@ class AuthCommands(BaseHuggingfaceCLICommand):
         whoami_parser.set_defaults(func=lambda args: AuthWhoami(args))
 
         # Existing subcommands
-        auth_switch_parser = auth_subparsers.add_parser("switch", help="Switch between access tokens")
+        auth_switch_parser = auth_subparsers.add_parser(
+            "switch", help="Switch between access tokens"
+        )
         auth_switch_parser.add_argument(
             "--token-name",
             type=str,
@@ -110,7 +114,9 @@ class AuthCommands(BaseHuggingfaceCLICommand):
         )
         auth_switch_parser.set_defaults(func=lambda args: AuthSwitch(args))
 
-        auth_list_parser = auth_subparsers.add_parser("list", help="List all stored access tokens")
+        auth_list_parser = auth_subparsers.add_parser(
+            "list", help="List all stored access tokens"
+        )
         auth_list_parser.set_defaults(func=lambda args: AuthList(args))
 
 
@@ -162,7 +168,9 @@ class AuthSwitch(BaseAuthCommand):
             print(f"{i}. {token_name}")
         while True:
             try:
-                choice = input("Enter the number of the token to switch to (or 'q' to quit): ")
+                choice = input(
+                    "Enter the number of the token to switch to (or 'q' to quit): "
+                )
                 if choice.lower() == "q":
                     return None
                 index = int(choice) - 1

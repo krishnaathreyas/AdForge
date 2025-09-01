@@ -50,7 +50,9 @@ class OAuthOrgInfo:
     is_enterprise: bool
     can_pay: Optional[bool] = None
     role_in_org: Optional[str] = None
-    security_restrictions: Optional[List[Literal["ip", "token-policy", "mfa", "sso"]]] = None
+    security_restrictions: Optional[
+        List[Literal["ip", "token-policy", "mfa", "sso"]]
+    ] = None
 
 
 @dataclass
@@ -242,7 +244,9 @@ def parse_huggingface_oauth(request: "fastapi.Request") -> Optional[OAuthInfo]:
 
     return OAuthInfo(
         access_token=oauth_data.get("access_token"),
-        access_token_expires_at=datetime.datetime.fromtimestamp(oauth_data.get("expires_at")),
+        access_token_expires_at=datetime.datetime.fromtimestamp(
+            oauth_data.get("expires_at")
+        ),
         user_info=user_info,
         state=oauth_data.get("state"),
         scope=oauth_data.get("scope"),
@@ -283,7 +287,8 @@ def _add_oauth_routes(app: "fastapi.FastAPI", route_prefix: str) -> None:
         client_id=constants.OAUTH_CLIENT_ID,
         client_secret=constants.OAUTH_CLIENT_SECRET,
         client_kwargs={"scope": constants.OAUTH_SCOPES},
-        server_metadata_url=constants.OPENID_PROVIDER_URL + "/.well-known/openid-configuration",
+        server_metadata_url=constants.OPENID_PROVIDER_URL
+        + "/.well-known/openid-configuration",
     )
 
     login_uri, callback_uri, logout_uri = _get_oauth_uris(route_prefix)
@@ -306,7 +311,9 @@ def _add_oauth_routes(app: "fastapi.FastAPI", route_prefix: str) -> None:
             target_url = request.query_params.get("_target_url")
 
             # Build redirect URI with the same query params as before and bump nb_redirects count
-            query_params: Dict[str, Union[int, str]] = {"_nb_redirects": nb_redirects + 1}
+            query_params: Dict[str, Union[int, str]] = {
+                "_nb_redirects": nb_redirects + 1
+            }
             if target_url:
                 query_params["_target_url"] = target_url
 
@@ -370,7 +377,9 @@ def _add_mocked_oauth_routes(app: "fastapi.FastAPI", route_prefix: str = "/") ->
         """Fake endpoint that redirects to HF OAuth page."""
         # Define target (where to redirect after login)
         redirect_uri = _generate_redirect_uri(request)
-        return RedirectResponse(callback_uri + "?" + urllib.parse.urlencode({"_target_url": redirect_uri}))
+        return RedirectResponse(
+            callback_uri + "?" + urllib.parse.urlencode({"_target_url": redirect_uri})
+        )
 
     @app.get(callback_uri)
     async def oauth_redirect_callback(request: fastapi.Request) -> RedirectResponse:
@@ -383,7 +392,9 @@ def _add_mocked_oauth_routes(app: "fastapi.FastAPI", route_prefix: str = "/") ->
         """Endpoint that logs out the user (e.g. delete cookie session)."""
         request.session.pop("oauth_info", None)
         logout_url = URL("/").include_query_params(**request.query_params)
-        return RedirectResponse(url=logout_url, status_code=302)  # see https://github.com/gradio-app/gradio/pull/9659
+        return RedirectResponse(
+            url=logout_url, status_code=302
+        )  # see https://github.com/gradio-app/gradio/pull/9659
 
 
 def _generate_redirect_uri(request: "fastapi.Request") -> str:
@@ -394,7 +405,9 @@ def _generate_redirect_uri(request: "fastapi.Request") -> str:
         # otherwise => keep query params
         target = "/?" + urllib.parse.urlencode(request.query_params)
 
-    redirect_uri = request.url_for("oauth_redirect_callback").include_query_params(_target_url=target)
+    redirect_uri = request.url_for("oauth_redirect_callback").include_query_params(
+        _target_url=target
+    )
     redirect_uri_as_str = str(redirect_uri)
     if redirect_uri.netloc.endswith(".hf.space"):
         # In Space, FastAPI redirect as http but we want https

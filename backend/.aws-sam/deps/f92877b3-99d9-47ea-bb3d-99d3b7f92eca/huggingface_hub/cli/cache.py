@@ -64,7 +64,9 @@ class CacheCommand(BaseHuggingfaceCLICommand):
     @staticmethod
     def register_subcommand(parser: _SubParsersAction):
         cache_parser = parser.add_parser("cache", help="Manage local cache directory.")
-        cache_subparsers = cache_parser.add_subparsers(dest="cache_command", help="Cache subcommands")
+        cache_subparsers = cache_parser.add_subparsers(
+            dest="cache_command", help="Cache subcommands"
+        )
 
         # Show help if no subcommand is provided
         cache_parser.set_defaults(func=lambda args: cache_parser.print_help())
@@ -86,7 +88,9 @@ class CacheCommand(BaseHuggingfaceCLICommand):
         )
         scan_parser.set_defaults(func=CacheCommand, cache_command="scan")
         # Delete subcommand
-        delete_parser = cache_subparsers.add_parser("delete", help="Delete revisions from the cache directory.")
+        delete_parser = cache_subparsers.add_parser(
+            "delete", help="Delete revisions from the cache directory."
+        )
         delete_parser.add_argument(
             "--dir",
             type=str,
@@ -128,7 +132,9 @@ class CacheCommand(BaseHuggingfaceCLICommand):
         elif self.cache_command == "delete":
             self._run_delete()
         else:
-            print("Please specify a cache subcommand (scan or delete). Use -h for help.")
+            print(
+                "Please specify a cache subcommand (scan or delete). Use -h for help."
+            )
 
     def _run_scan(self):
         try:
@@ -156,11 +162,18 @@ class CacheCommand(BaseHuggingfaceCLICommand):
     def _run_delete(self):
         hf_cache_info = scan_cache_dir(self.cache_dir)
         if self.disable_tui:
-            selected_hashes = _manual_review_no_tui(hf_cache_info, preselected=[], sort_by=self.sort_by)
+            selected_hashes = _manual_review_no_tui(
+                hf_cache_info, preselected=[], sort_by=self.sort_by
+            )
         else:
-            selected_hashes = _manual_review_tui(hf_cache_info, preselected=[], sort_by=self.sort_by)
+            selected_hashes = _manual_review_tui(
+                hf_cache_info, preselected=[], sort_by=self.sort_by
+            )
         if len(selected_hashes) > 0 and _CANCEL_DELETION_STR not in selected_hashes:
-            confirm_message = _get_expectations_str(hf_cache_info, selected_hashes) + " Confirm deletion ?"
+            confirm_message = (
+                _get_expectations_str(hf_cache_info, selected_hashes)
+                + " Confirm deletion ?"
+            )
             if self.disable_tui:
                 confirmed = _ask_for_confirmation_no_tui(confirm_message)
             else:
@@ -219,7 +232,9 @@ def get_table(hf_cache_info: HFCacheInfo, *, verbosity: int = 0) -> str:
                     str(revision.snapshot_path),
                 ]
                 for repo in sorted(hf_cache_info.repos, key=lambda repo: repo.repo_path)
-                for revision in sorted(repo.revisions, key=lambda revision: revision.commit_hash)
+                for revision in sorted(
+                    repo.revisions, key=lambda revision: revision.commit_hash
+                )
             ],
             headers=[
                 "REPO ID",
@@ -234,7 +249,9 @@ def get_table(hf_cache_info: HFCacheInfo, *, verbosity: int = 0) -> str:
         )
 
 
-def _get_repo_sorting_key(repo: CachedRepoInfo, sort_by: Optional[SortingOption_T] = None):
+def _get_repo_sorting_key(
+    repo: CachedRepoInfo, sort_by: Optional[SortingOption_T] = None
+):
     if sort_by == "alphabetical":
         return (repo.repo_type, repo.repo_id.lower())
     elif sort_by == "lastUpdated":
@@ -249,16 +266,23 @@ def _get_repo_sorting_key(repo: CachedRepoInfo, sort_by: Optional[SortingOption_
 
 @require_inquirer_py
 def _manual_review_tui(
-    hf_cache_info: HFCacheInfo, preselected: List[str], sort_by: Optional[SortingOption_T] = None
+    hf_cache_info: HFCacheInfo,
+    preselected: List[str],
+    sort_by: Optional[SortingOption_T] = None,
 ) -> List[str]:
-    choices = _get_tui_choices_from_scan(repos=hf_cache_info.repos, preselected=preselected, sort_by=sort_by)
+    choices = _get_tui_choices_from_scan(
+        repos=hf_cache_info.repos, preselected=preselected, sort_by=sort_by
+    )
     checkbox = inquirer.checkbox(
         message="Select revisions to delete:",
         choices=choices,
         cycle=False,
         height=100,
         instruction=_get_expectations_str(
-            hf_cache_info, selected_hashes=[c.value for c in choices if isinstance(c, Choice) and c.enabled]
+            hf_cache_info,
+            selected_hashes=[
+                c.value for c in choices if isinstance(c, Choice) and c.enabled
+            ],
         ),
         long_instruction="Press <space> to select, <enter> to validate and <ctrl+c> to quit without modification.",
         transformer=lambda result: f"{len(result)} revision(s) selected.",
@@ -267,7 +291,11 @@ def _manual_review_tui(
     def _update_expectations(_):
         checkbox._instruction = _get_expectations_str(
             hf_cache_info,
-            selected_hashes=[choice["value"] for choice in checkbox.content_control.choices if choice["enabled"]],
+            selected_hashes=[
+                choice["value"]
+                for choice in checkbox.content_control.choices
+                if choice["enabled"]
+            ],
         )
 
     checkbox.kb_func_lookup["toggle"].append({"func": _update_expectations})
@@ -283,12 +311,16 @@ def _ask_for_confirmation_tui(message: str, default: bool = True) -> bool:
 
 
 def _get_tui_choices_from_scan(
-    repos: Iterable[CachedRepoInfo], preselected: List[str], sort_by: Optional[SortingOption_T] = None
+    repos: Iterable[CachedRepoInfo],
+    preselected: List[str],
+    sort_by: Optional[SortingOption_T] = None,
 ) -> List:
     choices: List[Union["Choice", "Separator"]] = []
     choices.append(
         Choice(
-            _CANCEL_DELETION_STR, name="None of the following (if selected, nothing will be deleted).", enabled=False
+            _CANCEL_DELETION_STR,
+            name="None of the following (if selected, nothing will be deleted).",
+            enabled=False,
         )
     )
     sorted_repos = sorted(repos, key=lambda repo: _get_repo_sorting_key(repo, sort_by))
@@ -312,12 +344,16 @@ def _get_tui_choices_from_scan(
 
 
 def _manual_review_no_tui(
-    hf_cache_info: HFCacheInfo, preselected: List[str], sort_by: Optional[SortingOption_T] = None
+    hf_cache_info: HFCacheInfo,
+    preselected: List[str],
+    sort_by: Optional[SortingOption_T] = None,
 ) -> List[str]:
     fd, tmp_path = mkstemp(suffix=".txt")
     os.close(fd)
     lines = []
-    sorted_repos = sorted(hf_cache_info.repos, key=lambda repo: _get_repo_sorting_key(repo, sort_by))
+    sorted_repos = sorted(
+        hf_cache_info.repos, key=lambda repo: _get_repo_sorting_key(repo, sort_by)
+    )
     for repo in sorted_repos:
         lines.append(
             f"\n# {repo.repo_type.capitalize()} {repo.repo_id} ({repo.size_on_disk_str}, used {repo.last_accessed_str})"
@@ -340,7 +376,8 @@ def _manual_review_no_tui(
     while True:
         selected_hashes = _read_manual_review_tmp_file(tmp_path)
         if _ask_for_confirmation_no_tui(
-            _get_expectations_str(hf_cache_info, selected_hashes) + " Continue ?", default=False
+            _get_expectations_str(hf_cache_info, selected_hashes) + " Continue ?",
+            default=False,
         ):
             break
     os.remove(tmp_path)
@@ -364,7 +401,9 @@ def _ask_for_confirmation_no_tui(message: str, default: bool = True) -> bool:
         print(f"Invalid input. Must be one of {ALL}")
 
 
-def _get_expectations_str(hf_cache_info: HFCacheInfo, selected_hashes: List[str]) -> str:
+def _get_expectations_str(
+    hf_cache_info: HFCacheInfo, selected_hashes: List[str]
+) -> str:
     if _CANCEL_DELETION_STR in selected_hashes:
         return "Nothing will be deleted."
     strategy = hf_cache_info.delete_revisions(*selected_hashes)

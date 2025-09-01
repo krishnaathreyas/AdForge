@@ -11,12 +11,29 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from itertools import groupby
 from pathlib import Path, PurePosixPath
-from typing import TYPE_CHECKING, Any, BinaryIO, Dict, Iterable, Iterator, List, Literal, Optional, Tuple, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    BinaryIO,
+    Dict,
+    Iterable,
+    Iterator,
+    List,
+    Literal,
+    Optional,
+    Tuple,
+    Union,
+)
 
 from tqdm.contrib.concurrent import thread_map
 
 from . import constants
-from .errors import EntryNotFoundError, HfHubHTTPError, XetAuthorizationError, XetRefreshTokenError
+from .errors import (
+    EntryNotFoundError,
+    HfHubHTTPError,
+    XetAuthorizationError,
+    XetRefreshTokenError,
+)
 from .file_download import hf_hub_url
 from .lfs import UploadInfo, lfs_upload, post_lfs_batch_info
 from .utils import (
@@ -178,7 +195,9 @@ class CommitOperationAdd:
         if isinstance(self.path_or_fileobj, str):
             path_or_fileobj = os.path.normpath(os.path.expanduser(self.path_or_fileobj))
             if not os.path.isfile(path_or_fileobj):
-                raise ValueError(f"Provided path: '{path_or_fileobj}' is not a file on the local file system")
+                raise ValueError(
+                    f"Provided path: '{path_or_fileobj}' is not a file on the local file system"
+                )
         elif not isinstance(self.path_or_fileobj, (io.BufferedIOBase, bytes)):
             # ^^ Inspired from: https://stackoverflow.com/questions/44584829/how-to-determine-if-file-is-opened-in-binary-or-text-mode
             raise ValueError(
@@ -239,7 +258,9 @@ class CommitOperationAdd:
         config.json: 100%|█████████████████████████| 8.19k/8.19k [00:02<00:00, 3.72kB/s]
         ```
         """
-        if isinstance(self.path_or_fileobj, str) or isinstance(self.path_or_fileobj, Path):
+        if isinstance(self.path_or_fileobj, str) or isinstance(
+            self.path_or_fileobj, Path
+        ):
             if with_tqdm:
                 with tqdm_stream_file(self.path_or_fileobj) as file:
                     yield file
@@ -439,12 +460,21 @@ def _upload_lfs_files(
     def _wrapped_lfs_upload(batch_action) -> None:
         try:
             operation = oid2addop[batch_action["oid"]]
-            lfs_upload(operation=operation, lfs_batch_action=batch_action, headers=headers, endpoint=endpoint)
+            lfs_upload(
+                operation=operation,
+                lfs_batch_action=batch_action,
+                headers=headers,
+                endpoint=endpoint,
+            )
         except Exception as exc:
-            raise RuntimeError(f"Error while uploading '{operation.path_in_repo}' to the Hub.") from exc
+            raise RuntimeError(
+                f"Error while uploading '{operation.path_in_repo}' to the Hub."
+            ) from exc
 
     if constants.HF_HUB_ENABLE_HF_TRANSFER:
-        logger.debug(f"Uploading {len(filtered_actions)} LFS files to the Hub using `hf_transfer`.")
+        logger.debug(
+            f"Uploading {len(filtered_actions)} LFS files to the Hub using `hf_transfer`."
+        )
         for action in hf_tqdm(filtered_actions, name="huggingface_hub.lfs_upload"):
             _wrapped_lfs_upload(action)
     elif len(filtered_actions) == 1:
@@ -553,7 +583,10 @@ def _upload_xet_files(
         raise
 
     xet_endpoint = xet_connection_info.endpoint
-    access_token_info = (xet_connection_info.access_token, xet_connection_info.expiration_unix_epoch)
+    access_token_info = (
+        xet_connection_info.access_token,
+        xet_connection_info.expiration_unix_epoch,
+    )
 
     def token_refresher() -> Tuple[str, int]:
         new_xet_connection = fetch_xet_connection_info_from_repo_info(
@@ -576,11 +609,15 @@ def _upload_xet_files(
         progress, progress_callback = None, None
 
     try:
-        for i, chunk in enumerate(chunk_iterable(additions, chunk_size=UPLOAD_BATCH_MAX_NUM_FILES)):
+        for i, chunk in enumerate(
+            chunk_iterable(additions, chunk_size=UPLOAD_BATCH_MAX_NUM_FILES)
+        ):
             _chunk = [op for op in chunk]
 
             bytes_ops = [op for op in _chunk if isinstance(op.path_or_fileobj, bytes)]
-            paths_ops = [op for op in _chunk if isinstance(op.path_or_fileobj, (str, Path))]
+            paths_ops = [
+                op for op in _chunk if isinstance(op.path_or_fileobj, (str, Path))
+            ]
 
             if len(paths_ops) > 0:
                 upload_files(
@@ -691,9 +728,15 @@ def _fetch_upload_modes(
         )
         hf_raise_for_status(resp)
         preupload_info = _validate_preupload_info(resp.json())
-        upload_modes.update(**{file["path"]: file["uploadMode"] for file in preupload_info["files"]})
-        should_ignore_info.update(**{file["path"]: file["shouldIgnore"] for file in preupload_info["files"]})
-        oid_info.update(**{file["path"]: file.get("oid") for file in preupload_info["files"]})
+        upload_modes.update(
+            **{file["path"]: file["uploadMode"] for file in preupload_info["files"]}
+        )
+        should_ignore_info.update(
+            **{file["path"]: file["shouldIgnore"] for file in preupload_info["files"]}
+        )
+        oid_info.update(
+            **{file["path"]: file.get("oid") for file in preupload_info["files"]}
+        )
 
     # Set upload mode for each addition operation
     for addition in additions:
@@ -805,7 +848,9 @@ def _fetch_files_to_copy(
                     f"Cannot copy {operation.src_path_in_repo} at revision "
                     f"{src_revision or revision}: file is missing on repo."
                 )
-            operation._src_oid = oid_info.get((operation.src_path_in_repo, operation.src_revision))
+            operation._src_oid = oid_info.get(
+                (operation.src_path_in_repo, operation.src_revision)
+            )
             operation._dest_oid = oid_info.get((operation.path_in_repo, revision))
     return files_to_copy
 
@@ -841,12 +886,17 @@ def _prepare_commit_payload(
     for operation in operations:
         # Skip ignored files
         if isinstance(operation, CommitOperationAdd) and operation._should_ignore:
-            logger.debug(f"Skipping file '{operation.path_in_repo}' in commit (ignored by gitignore file).")
+            logger.debug(
+                f"Skipping file '{operation.path_in_repo}' in commit (ignored by gitignore file)."
+            )
             nb_ignored_files += 1
             continue
 
         # 2.a. Case adding a regular file
-        if isinstance(operation, CommitOperationAdd) and operation._upload_mode == "regular":
+        if (
+            isinstance(operation, CommitOperationAdd)
+            and operation._upload_mode == "regular"
+        ):
             yield {
                 "key": "file",
                 "value": {
@@ -856,7 +906,10 @@ def _prepare_commit_payload(
                 },
             }
         # 2.b. Case adding an LFS file
-        elif isinstance(operation, CommitOperationAdd) and operation._upload_mode == "lfs":
+        elif (
+            isinstance(operation, CommitOperationAdd)
+            and operation._upload_mode == "lfs"
+        ):
             yield {
                 "key": "lfsFile",
                 "value": {
@@ -874,7 +927,9 @@ def _prepare_commit_payload(
             }
         # 2.d. Case copying a file or folder
         elif isinstance(operation, CommitOperationCopy):
-            file_to_copy = files_to_copy[(operation.src_path_in_repo, operation.src_revision)]
+            file_to_copy = files_to_copy[
+                (operation.src_path_in_repo, operation.src_revision)
+            ]
             if isinstance(file_to_copy, bytes):
                 yield {
                     "key": "file",
@@ -905,4 +960,6 @@ def _prepare_commit_payload(
             )
 
     if nb_ignored_files > 0:
-        logger.info(f"Skipped {nb_ignored_files} file(s) in commit (ignored by gitignore file).")
+        logger.info(
+            f"Skipped {nb_ignored_files} file(s) in commit (ignored by gitignore file)."
+        )

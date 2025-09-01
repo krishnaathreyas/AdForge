@@ -4,7 +4,9 @@ from typing import Any, Dict, List, Optional, Union, overload
 from huggingface_hub import constants
 from huggingface_hub.hf_api import InferenceProviderMapping
 from huggingface_hub.inference._common import RequestParameters
-from huggingface_hub.inference._generated.types.chat_completion import ChatCompletionInputMessage
+from huggingface_hub.inference._generated.types.chat_completion import (
+    ChatCompletionInputMessage,
+)
 from huggingface_hub.utils import build_hf_headers, get_token, logging
 
 
@@ -43,7 +45,9 @@ def filter_none(obj: Dict[str, Any]) -> Dict[str, Any]: ...
 def filter_none(obj: List[Any]) -> List[Any]: ...
 
 
-def filter_none(obj: Union[Dict[str, Any], List[Any]]) -> Union[Dict[str, Any], List[Any]]:
+def filter_none(
+    obj: Union[Dict[str, Any], List[Any]],
+) -> Union[Dict[str, Any], List[Any]]:
     if isinstance(obj, dict):
         cleaned: Dict[str, Any] = {}
         for k, v in obj.items():
@@ -96,12 +100,16 @@ class TaskProviderHelper:
         url = self._prepare_url(api_key, provider_mapping_info.provider_id)
 
         # prepare payload (to customize in subclasses)
-        payload = self._prepare_payload_as_dict(inputs, parameters, provider_mapping_info=provider_mapping_info)
+        payload = self._prepare_payload_as_dict(
+            inputs, parameters, provider_mapping_info=provider_mapping_info
+        )
         if payload is not None:
             payload = recursive_merge(payload, filter_none(extra_payload or {}))
 
         # body data (to customize in subclasses)
-        data = self._prepare_payload_as_bytes(inputs, parameters, provider_mapping_info, extra_payload)
+        data = self._prepare_payload_as_bytes(
+            inputs, parameters, provider_mapping_info, extra_payload
+        )
 
         # check if both payload and data are set and return
         if payload is not None and data is not None:
@@ -109,7 +117,12 @@ class TaskProviderHelper:
         if payload is None and data is None:
             raise ValueError("Either payload or data must be set in the request.")
         return RequestParameters(
-            url=url, task=self.task, model=provider_mapping_info.provider_id, json=payload, data=data, headers=headers
+            url=url,
+            task=self.task,
+            model=provider_mapping_info.provider_id,
+            json=payload,
+            data=data,
+            headers=headers,
         )
 
     def get_response(
@@ -140,7 +153,9 @@ class TaskProviderHelper:
 
         Usually not overwritten in subclasses."""
         if model is None:
-            raise ValueError(f"Please provide an HF model ID supported by {self.provider}.")
+            raise ValueError(
+                f"Please provide an HF model ID supported by {self.provider}."
+            )
 
         # hardcoded mapping for local testing
         if HARDCODED_MODEL_INFERENCE_MAPPING.get(self.provider, {}).get(model):
@@ -153,7 +168,9 @@ class TaskProviderHelper:
                 break
 
         if provider_mapping is None:
-            raise ValueError(f"Model {model} is not supported by provider {self.provider}.")
+            raise ValueError(
+                f"Model {model} is not supported by provider {self.provider}."
+            )
 
         if provider_mapping.task != self.task:
             raise ValueError(
@@ -193,7 +210,9 @@ class TaskProviderHelper:
         Usually not overwritten in subclasses."""
         # Route to the proxy if the api_key is a HF TOKEN
         if api_key.startswith("hf_"):
-            logger.info(f"Calling '{self.provider}' provider through Hugging Face router.")
+            logger.info(
+                f"Calling '{self.provider}' provider through Hugging Face router."
+            )
             return constants.INFERENCE_PROXY_TEMPLATE.format(provider=self.provider)
         else:
             logger.info(f"Calling '{self.provider}' provider directly.")
@@ -207,7 +226,10 @@ class TaskProviderHelper:
         return ""
 
     def _prepare_payload_as_dict(
-        self, inputs: Any, parameters: Dict, provider_mapping_info: InferenceProviderMapping
+        self,
+        inputs: Any,
+        parameters: Dict,
+        provider_mapping_info: InferenceProviderMapping,
     ) -> Optional[Dict]:
         """Return the payload to use for the request, as a dict.
 
@@ -249,7 +271,13 @@ class BaseConversationalTask(TaskProviderHelper):
         parameters: Dict,
         provider_mapping_info: InferenceProviderMapping,
     ) -> Optional[Dict]:
-        return filter_none({"messages": inputs, **parameters, "model": provider_mapping_info.provider_id})
+        return filter_none(
+            {
+                "messages": inputs,
+                **parameters,
+                "model": provider_mapping_info.provider_id,
+            }
+        )
 
 
 class BaseTextGenerationTask(TaskProviderHelper):
@@ -265,9 +293,14 @@ class BaseTextGenerationTask(TaskProviderHelper):
         return "/v1/completions"
 
     def _prepare_payload_as_dict(
-        self, inputs: Any, parameters: Dict, provider_mapping_info: InferenceProviderMapping
+        self,
+        inputs: Any,
+        parameters: Dict,
+        provider_mapping_info: InferenceProviderMapping,
     ) -> Optional[Dict]:
-        return filter_none({"prompt": inputs, **parameters, "model": provider_mapping_info.provider_id})
+        return filter_none(
+            {"prompt": inputs, **parameters, "model": provider_mapping_info.provider_id}
+        )
 
 
 @lru_cache(maxsize=None)
@@ -288,9 +321,15 @@ def recursive_merge(dict1: Dict, dict2: Dict) -> Dict:
     return {
         **dict1,
         **{
-            key: recursive_merge(dict1[key], value)
-            if (key in dict1 and isinstance(dict1[key], dict) and isinstance(value, dict))
-            else value
+            key: (
+                recursive_merge(dict1[key], value)
+                if (
+                    key in dict1
+                    and isinstance(dict1[key], dict)
+                    and isinstance(value, dict)
+                )
+                else value
+            )
             for key, value in dict2.items()
         },
     }

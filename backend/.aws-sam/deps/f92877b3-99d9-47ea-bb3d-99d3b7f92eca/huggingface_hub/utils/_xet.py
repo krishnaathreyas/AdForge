@@ -49,21 +49,29 @@ def parse_xet_file_data_from_response(
         file_hash = response.headers[constants.HUGGINGFACE_HEADER_X_XET_HASH]
 
         if constants.HUGGINGFACE_HEADER_LINK_XET_AUTH_KEY in response.links:
-            refresh_route = response.links[constants.HUGGINGFACE_HEADER_LINK_XET_AUTH_KEY]["url"]
+            refresh_route = response.links[
+                constants.HUGGINGFACE_HEADER_LINK_XET_AUTH_KEY
+            ]["url"]
         else:
-            refresh_route = response.headers[constants.HUGGINGFACE_HEADER_X_XET_REFRESH_ROUTE]
+            refresh_route = response.headers[
+                constants.HUGGINGFACE_HEADER_X_XET_REFRESH_ROUTE
+            ]
     except KeyError:
         return None
     endpoint = endpoint if endpoint is not None else constants.ENDPOINT
     if refresh_route.startswith(constants.HUGGINGFACE_CO_URL_HOME):
-        refresh_route = refresh_route.replace(constants.HUGGINGFACE_CO_URL_HOME.rstrip("/"), endpoint.rstrip("/"))
+        refresh_route = refresh_route.replace(
+            constants.HUGGINGFACE_CO_URL_HOME.rstrip("/"), endpoint.rstrip("/")
+        )
     return XetFileData(
         file_hash=file_hash,
         refresh_route=refresh_route,
     )
 
 
-def parse_xet_connection_info_from_headers(headers: Dict[str, str]) -> Optional[XetConnectionInfo]:
+def parse_xet_connection_info_from_headers(
+    headers: Dict[str, str],
+) -> Optional[XetConnectionInfo]:
     """
     Parse XET connection info from the HTTP headers or return None if not found.
     Args:
@@ -77,7 +85,9 @@ def parse_xet_connection_info_from_headers(headers: Dict[str, str]) -> Optional[
     try:
         endpoint = headers[constants.HUGGINGFACE_HEADER_X_XET_ENDPOINT]
         access_token = headers[constants.HUGGINGFACE_HEADER_X_XET_ACCESS_TOKEN]
-        expiration_unix_epoch = int(headers[constants.HUGGINGFACE_HEADER_X_XET_EXPIRATION])
+        expiration_unix_epoch = int(
+            headers[constants.HUGGINGFACE_HEADER_X_XET_EXPIRATION]
+        )
     except (KeyError, ValueError, TypeError):
         return None
 
@@ -112,7 +122,9 @@ def refresh_xet_connection_info(
             If the Hub API response is improperly formatted.
     """
     if file_data.refresh_route is None:
-        raise ValueError("The provided xet metadata does not contain a refresh endpoint.")
+        raise ValueError(
+            "The provided xet metadata does not contain a refresh endpoint."
+        )
     return _fetch_xet_connection_info_with_url(file_data.refresh_route, headers)
 
 
@@ -154,7 +166,9 @@ def fetch_xet_connection_info_from_repo_info(
             If the Hub API response is improperly formatted.
     """
     endpoint = endpoint if endpoint is not None else constants.ENDPOINT
-    url = f"{endpoint}/api/{repo_type}s/{repo_id}/xet-{token_type.value}-token/{revision}"
+    url = (
+        f"{endpoint}/api/{repo_type}s/{repo_id}/xet-{token_type.value}-token/{revision}"
+    )
     return _fetch_xet_connection_info_with_url(url, headers, params)
 
 

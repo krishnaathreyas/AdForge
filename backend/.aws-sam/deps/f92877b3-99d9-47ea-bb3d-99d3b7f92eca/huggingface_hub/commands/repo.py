@@ -40,9 +40,15 @@ logger = logging.get_logger(__name__)
 class RepoCommands(BaseHuggingfaceCLICommand):
     @staticmethod
     def register_subcommand(parser: _SubParsersAction):
-        repo_parser = parser.add_parser("repo", help="{create} Commands to interact with your huggingface.co repos.")
-        repo_subparsers = repo_parser.add_subparsers(help="huggingface.co repos related commands")
-        repo_create_parser = repo_subparsers.add_parser("create", help="Create a new repo on huggingface.co")
+        repo_parser = parser.add_parser(
+            "repo", help="{create} Commands to interact with your huggingface.co repos."
+        )
+        repo_subparsers = repo_parser.add_subparsers(
+            help="huggingface.co repos related commands"
+        )
+        repo_create_parser = repo_subparsers.add_parser(
+            "create", help="Create a new repo on huggingface.co"
+        )
         repo_create_parser.add_argument(
             "repo_id",
             type=str,
@@ -91,7 +97,9 @@ class RepoCommands(BaseHuggingfaceCLICommand):
             help="[Deprecated] no effect.",
         )
         repo_create_parser.add_argument(
-            "--organization", type=str, help="[Deprecated] Pass the organization namespace directly in the repo_id."
+            "--organization",
+            type=str,
+            help="[Deprecated] Pass the organization namespace directly in the repo_id.",
         )
         repo_create_parser.set_defaults(func=lambda args: RepoCreateCommand(args))
 
@@ -134,7 +142,11 @@ class RepoCreateCommand:
 
         if self.organization is not None:
             if "/" in self.repo_id:
-                print(ANSI.red("You cannot pass both --organization and a repo_id with a namespace."))
+                print(
+                    ANSI.red(
+                        "You cannot pass both --organization and a repo_id with a namespace."
+                    )
+                )
                 exit(1)
             self.repo_id = f"{self.organization}/{self.repo_id}"
 

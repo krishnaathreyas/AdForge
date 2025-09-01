@@ -30,7 +30,11 @@ from requests.exceptions import HTTPError
 from huggingface_hub.commands import BaseHuggingfaceCLICommand
 from huggingface_hub.commands._cli_utils import ANSI
 from huggingface_hub.constants import REPO_TYPES, SPACES_SDK_TYPES
-from huggingface_hub.errors import HfHubHTTPError, RepositoryNotFoundError, RevisionNotFoundError
+from huggingface_hub.errors import (
+    HfHubHTTPError,
+    RepositoryNotFoundError,
+    RevisionNotFoundError,
+)
 from huggingface_hub.hf_api import HfApi
 from huggingface_hub.utils import logging
 
@@ -42,13 +46,17 @@ class RepoCommands(BaseHuggingfaceCLICommand):
     @staticmethod
     def register_subcommand(parser: _SubParsersAction):
         repo_parser = parser.add_parser("repo", help="Manage repos on the Hub.")
-        repo_subparsers = repo_parser.add_subparsers(help="huggingface.co repos related commands")
+        repo_subparsers = repo_parser.add_subparsers(
+            help="huggingface.co repos related commands"
+        )
 
         # Show help if no subcommand is provided
         repo_parser.set_defaults(func=lambda args: repo_parser.print_help())
 
         # CREATE
-        repo_create_parser = repo_subparsers.add_parser("create", help="Create a new repo on huggingface.co")
+        repo_create_parser = repo_subparsers.add_parser(
+            "create", help="Create a new repo on huggingface.co"
+        )
         repo_create_parser.add_argument(
             "repo_id",
             type=str,
@@ -88,19 +96,35 @@ class RepoCommands(BaseHuggingfaceCLICommand):
         repo_create_parser.set_defaults(func=lambda args: RepoCreateCommand(args))
 
         # TAG SUBCOMMANDS
-        repo_tag_parser = repo_subparsers.add_parser("tag", help="Manage tags for a repo on the Hub.")
-        tag_subparsers = repo_tag_parser.add_subparsers(help="Tag actions", dest="tag_action", required=True)
+        repo_tag_parser = repo_subparsers.add_parser(
+            "tag", help="Manage tags for a repo on the Hub."
+        )
+        tag_subparsers = repo_tag_parser.add_subparsers(
+            help="Tag actions", dest="tag_action", required=True
+        )
 
         # tag create
-        tag_create_parser = tag_subparsers.add_parser("create", help="Create a tag for a repo.")
-        tag_create_parser.add_argument(
-            "repo_id", type=str, help="The ID of the repo to tag (e.g. `username/repo-name`)."
+        tag_create_parser = tag_subparsers.add_parser(
+            "create", help="Create a tag for a repo."
         )
-        tag_create_parser.add_argument("tag", type=str, help="The name of the tag to create.")
-        tag_create_parser.add_argument("-m", "--message", type=str, help="The description of the tag to create.")
-        tag_create_parser.add_argument("--revision", type=str, help="The git revision to tag.")
         tag_create_parser.add_argument(
-            "--token", type=str, help="A User Access Token generated from https://huggingface.co/settings/tokens."
+            "repo_id",
+            type=str,
+            help="The ID of the repo to tag (e.g. `username/repo-name`).",
+        )
+        tag_create_parser.add_argument(
+            "tag", type=str, help="The name of the tag to create."
+        )
+        tag_create_parser.add_argument(
+            "-m", "--message", type=str, help="The description of the tag to create."
+        )
+        tag_create_parser.add_argument(
+            "--revision", type=str, help="The git revision to tag."
+        )
+        tag_create_parser.add_argument(
+            "--token",
+            type=str,
+            help="A User Access Token generated from https://huggingface.co/settings/tokens.",
         )
         tag_create_parser.add_argument(
             "--repo-type",
@@ -111,12 +135,18 @@ class RepoCommands(BaseHuggingfaceCLICommand):
         tag_create_parser.set_defaults(func=lambda args: RepoTagCreateCommand(args))
 
         # tag list
-        tag_list_parser = tag_subparsers.add_parser("list", help="List tags for a repo.")
-        tag_list_parser.add_argument(
-            "repo_id", type=str, help="The ID of the repo to list tags for (e.g. `username/repo-name`)."
+        tag_list_parser = tag_subparsers.add_parser(
+            "list", help="List tags for a repo."
         )
         tag_list_parser.add_argument(
-            "--token", type=str, help="A User Access Token generated from https://huggingface.co/settings/tokens."
+            "repo_id",
+            type=str,
+            help="The ID of the repo to list tags for (e.g. `username/repo-name`).",
+        )
+        tag_list_parser.add_argument(
+            "--token",
+            type=str,
+            help="A User Access Token generated from https://huggingface.co/settings/tokens.",
         )
         tag_list_parser.add_argument(
             "--repo-type",
@@ -127,14 +157,27 @@ class RepoCommands(BaseHuggingfaceCLICommand):
         tag_list_parser.set_defaults(func=lambda args: RepoTagListCommand(args))
 
         # tag delete
-        tag_delete_parser = tag_subparsers.add_parser("delete", help="Delete a tag from a repo.")
-        tag_delete_parser.add_argument(
-            "repo_id", type=str, help="The ID of the repo to delete the tag from (e.g. `username/repo-name`)."
+        tag_delete_parser = tag_subparsers.add_parser(
+            "delete", help="Delete a tag from a repo."
         )
-        tag_delete_parser.add_argument("tag", type=str, help="The name of the tag to delete.")
-        tag_delete_parser.add_argument("-y", "--yes", action="store_true", help="Answer Yes to prompts automatically.")
         tag_delete_parser.add_argument(
-            "--token", type=str, help="A User Access Token generated from https://huggingface.co/settings/tokens."
+            "repo_id",
+            type=str,
+            help="The ID of the repo to delete the tag from (e.g. `username/repo-name`).",
+        )
+        tag_delete_parser.add_argument(
+            "tag", type=str, help="The name of the tag to delete."
+        )
+        tag_delete_parser.add_argument(
+            "-y",
+            "--yes",
+            action="store_true",
+            help="Answer Yes to prompts automatically.",
+        )
+        tag_delete_parser.add_argument(
+            "--token",
+            type=str,
+            help="A User Access Token generated from https://huggingface.co/settings/tokens.",
         )
         tag_delete_parser.add_argument(
             "--repo-type",
@@ -183,7 +226,9 @@ class RepoTagCommand:
 
 class RepoTagCreateCommand(RepoTagCommand):
     def run(self):
-        print(f"You are about to create tag {ANSI.bold(self.args.tag)} on {self.repo_type} {ANSI.bold(self.repo_id)}")
+        print(
+            f"You are about to create tag {ANSI.bold(self.args.tag)} on {self.repo_type} {ANSI.bold(self.repo_id)}"
+        )
         try:
             self.api.create_tag(
                 repo_id=self.repo_id,
@@ -196,11 +241,15 @@ class RepoTagCreateCommand(RepoTagCommand):
             print(f"{self.repo_type.capitalize()} {ANSI.bold(self.repo_id)} not found.")
             exit(1)
         except RevisionNotFoundError:
-            print(f"Revision {ANSI.bold(getattr(self.args, 'revision', None))} not found.")
+            print(
+                f"Revision {ANSI.bold(getattr(self.args, 'revision', None))} not found."
+            )
             exit(1)
         except HfHubHTTPError as e:
             if e.response.status_code == 409:
-                print(f"Tag {ANSI.bold(self.args.tag)} already exists on {ANSI.bold(self.repo_id)}")
+                print(
+                    f"Tag {ANSI.bold(self.args.tag)} already exists on {ANSI.bold(self.repo_id)}"
+                )
                 exit(1)
             raise e
         print(f"Tag {ANSI.bold(self.args.tag)} created on {ANSI.bold(self.repo_id)}")
@@ -230,18 +279,24 @@ class RepoTagListCommand(RepoTagCommand):
 
 class RepoTagDeleteCommand(RepoTagCommand):
     def run(self):
-        print(f"You are about to delete tag {ANSI.bold(self.args.tag)} on {self.repo_type} {ANSI.bold(self.repo_id)}")
+        print(
+            f"You are about to delete tag {ANSI.bold(self.args.tag)} on {self.repo_type} {ANSI.bold(self.repo_id)}"
+        )
         if not getattr(self.args, "yes", False):
             choice = input("Proceed? [Y/n] ").lower()
             if choice not in ("", "y", "yes"):
                 print("Abort")
                 exit()
         try:
-            self.api.delete_tag(repo_id=self.repo_id, tag=self.args.tag, repo_type=self.repo_type)
+            self.api.delete_tag(
+                repo_id=self.repo_id, tag=self.args.tag, repo_type=self.repo_type
+            )
         except RepositoryNotFoundError:
             print(f"{self.repo_type.capitalize()} {ANSI.bold(self.repo_id)} not found.")
             exit(1)
         except RevisionNotFoundError:
-            print(f"Tag {ANSI.bold(self.args.tag)} not found on {ANSI.bold(self.repo_id)}")
+            print(
+                f"Tag {ANSI.bold(self.args.tag)} not found on {ANSI.bold(self.repo_id)}"
+            )
             exit(1)
         print(f"Tag {ANSI.bold(self.args.tag)} deleted on {ANSI.bold(self.repo_id)}")

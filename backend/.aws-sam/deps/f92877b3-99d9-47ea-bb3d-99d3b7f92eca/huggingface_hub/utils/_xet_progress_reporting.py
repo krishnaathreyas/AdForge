@@ -23,11 +23,17 @@ class XetProgressReporter:
 
         # Overall progress bars
         self.data_processing_bar = tqdm(
-            total=0, desc=self.format_desc("Processing Files (0 / 0)", False), position=0, **self.tqdm_settings
+            total=0,
+            desc=self.format_desc("Processing Files (0 / 0)", False),
+            position=0,
+            **self.tqdm_settings,
         )
 
         self.upload_bar = tqdm(
-            total=0, desc=self.format_desc("New Data Upload", False), position=1, **self.tqdm_settings
+            total=0,
+            desc=self.format_desc("New Data Upload", False),
+            position=1,
+            **self.tqdm_settings,
         )
 
         self.known_items: set[str] = set()
@@ -50,7 +56,11 @@ class XetProgressReporter:
 
         return f"{padding}{name.ljust(width)}"
 
-    def update_progress(self, total_update: PyTotalProgressUpdate, item_updates: List[PyItemProgressUpdate]):
+    def update_progress(
+        self,
+        total_update: PyTotalProgressUpdate,
+        item_updates: List[PyItemProgressUpdate],
+    ):
         # Update all the per-item values.
         for item in item_updates:
             item_name = item.item_name
@@ -95,7 +105,10 @@ class XetProgressReporter:
             elif in_final_bar_mode:
                 bar.n += item.bytes_completed
                 bar.total += item.total_bytes
-                bar.set_description(self.format_desc(f"[+ {final_bar_aggregation_count} files]", True), refresh=False)
+                bar.set_description(
+                    self.format_desc(f"[+ {final_bar_aggregation_count} files]", True),
+                    refresh=False,
+                )
             else:
                 bar.set_description(self.format_desc(name, True), refresh=False)
                 bar.n = item.bytes_completed
@@ -123,14 +136,21 @@ class XetProgressReporter:
 
         self.data_processing_bar.total = total_update.total_bytes
         self.data_processing_bar.set_description(
-            self.format_desc(f"Processing Files ({len(self.completed_items)} / {len(self.known_items)})", False),
+            self.format_desc(
+                f"Processing Files ({len(self.completed_items)} / {len(self.known_items)})",
+                False,
+            ),
             refresh=False,
         )
-        self.data_processing_bar.set_postfix_str(postfix(total_update.total_bytes_completion_rate), refresh=False)
+        self.data_processing_bar.set_postfix_str(
+            postfix(total_update.total_bytes_completion_rate), refresh=False
+        )
         self.data_processing_bar.update(total_update.total_bytes_completion_increment)
 
         self.upload_bar.total = total_update.total_transfer_bytes
-        self.upload_bar.set_postfix_str(postfix(total_update.total_transfer_bytes_completion_rate), refresh=False)
+        self.upload_bar.set_postfix_str(
+            postfix(total_update.total_transfer_bytes_completion_rate), refresh=False
+        )
         self.upload_bar.update(total_update.total_transfer_bytes_completion_increment)
 
     def close(self, _success):

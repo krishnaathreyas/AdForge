@@ -87,7 +87,11 @@ async def run_agent(
                 input_usages = set()
                 for server in servers:
                     # Check stdio's "env" and http/sse's "headers" mappings
-                    env_or_headers = server.get("env", {}) if server["type"] == "stdio" else server.get("headers", {})
+                    env_or_headers = (
+                        server.get("env", {})
+                        if server["type"] == "stdio"
+                        else server.get("headers", {})
+                    )
                     for key, value in env_or_headers.items():
                         if env_special_value in value:
                             input_usages.add(key)
@@ -118,7 +122,9 @@ async def run_agent(
                 if not final_value:
                     final_value = os.getenv(env_variable_key, "")
                     if final_value:
-                        print(f"[green]Value successfully loaded from '{env_variable_key}'[/green]")
+                        print(
+                            f"[green]Value successfully loaded from '{env_variable_key}'[/green]"
+                        )
                     else:
                         print(
                             f"[yellow]No value found for '{env_variable_key}' in environment variables. Continuing.[/yellow]"
@@ -127,10 +133,16 @@ async def run_agent(
 
                 # Inject resolved value (can be empty) into stdio's env or http/sse's headers
                 for server in servers:
-                    env_or_headers = server.get("env", {}) if server["type"] == "stdio" else server.get("headers", {})
+                    env_or_headers = (
+                        server.get("env", {})
+                        if server["type"] == "stdio"
+                        else server.get("headers", {})
+                    )
                     for key, value in env_or_headers.items():
                         if env_special_value in value:
-                            env_or_headers[key] = env_or_headers[key].replace(env_special_value, final_value)
+                            env_or_headers[key] = env_or_headers[key].replace(
+                                env_special_value, final_value
+                            )
 
             print()
 
@@ -138,7 +150,9 @@ async def run_agent(
         if isinstance(raw_api_key, str):
             substituted_api_key = raw_api_key
             for input_id, val in resolved_inputs.items():
-                substituted_api_key = substituted_api_key.replace(f"${{input:{input_id}}}", val)
+                substituted_api_key = substituted_api_key.replace(
+                    f"${{input:{input_id}}}", val
+                )
             config["apiKey"] = substituted_api_key
         # Main agent loop
         async with Agent(
@@ -150,7 +164,9 @@ async def run_agent(
             prompt=prompt,
         ) as agent:
             await agent.load_tools()
-            print(f"[bold blue]Agent loaded with {len(agent.available_tools)} tools:[/bold blue]")
+            print(
+                f"[bold blue]Agent loaded with {len(agent.available_tools)} tools:[/bold blue]"
+            )
             for t in agent.available_tools:
                 print(f"[blue] • {t.function.name}[/blue]")
 
@@ -171,7 +187,10 @@ async def run_agent(
                     if not first_sigint and abort_event.is_set():
                         continue
                     else:
-                        print("\n[red]Keyboard interrupt during input processing.[/red]", flush=True)
+                        print(
+                            "\n[red]Keyboard interrupt during input processing.[/red]",
+                            flush=True,
+                        )
                         break
 
                 try:
@@ -203,12 +222,18 @@ async def run_agent(
 
                 except Exception as e:
                     tb_str = traceback.format_exc()
-                    print(f"\n[bold red]Error during agent run: {e}\n{tb_str}[/bold red]", flush=True)
+                    print(
+                        f"\n[bold red]Error during agent run: {e}\n{tb_str}[/bold red]",
+                        flush=True,
+                    )
                     first_sigint = True  # Allow graceful interrupt for the next command
 
     except Exception as e:
         tb_str = traceback.format_exc()
-        print(f"\n[bold red]An unexpected error occurred: {e}\n{tb_str}[/bold red]", flush=True)
+        print(
+            f"\n[bold red]An unexpected error occurred: {e}\n{tb_str}[/bold red]",
+            flush=True,
+        )
         raise e
 
     finally:

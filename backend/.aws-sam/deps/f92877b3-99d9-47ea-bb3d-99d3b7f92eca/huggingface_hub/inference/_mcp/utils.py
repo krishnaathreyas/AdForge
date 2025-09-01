@@ -90,11 +90,15 @@ def _load_agent_config(agent_path: Optional[str]) -> Tuple[AgentConfig, Optional
     def _read_dir(directory: Path) -> Tuple[AgentConfig, Optional[str]]:
         cfg_file = directory / FILENAME_CONFIG
         if not cfg_file.exists():
-            raise FileNotFoundError(f" Config file not found in {directory}! Please make sure it exists locally")
+            raise FileNotFoundError(
+                f" Config file not found in {directory}! Please make sure it exists locally"
+            )
 
         config: AgentConfig = json.loads(cfg_file.read_text(encoding="utf-8"))
         prompt_file = directory / FILENAME_PROMPT
-        prompt: Optional[str] = prompt_file.read_text(encoding="utf-8") if prompt_file.exists() else None
+        prompt: Optional[str] = (
+            prompt_file.read_text(encoding="utf-8") if prompt_file.exists() else None
+        )
         return config, prompt
 
     if agent_path is None:

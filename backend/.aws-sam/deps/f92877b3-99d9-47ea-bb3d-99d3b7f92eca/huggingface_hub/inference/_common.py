@@ -50,7 +50,12 @@ from huggingface_hub.errors import (
     ValidationError,
 )
 
-from ..utils import get_session, is_aiohttp_available, is_numpy_available, is_pillow_available
+from ..utils import (
+    get_session,
+    is_aiohttp_available,
+    is_numpy_available,
+    is_pillow_available,
+)
 from ._generated.types import ChatCompletionStreamOutput, TextGenerationStreamOutput
 
 
@@ -117,7 +122,9 @@ class ModelStatus:
 def _import_aiohttp():
     # Make sure `aiohttp` is installed on the machine.
     if not is_aiohttp_available():
-        raise ImportError("Please install aiohttp to use `AsyncInferenceClient` (`pip install aiohttp`).")
+        raise ImportError(
+            "Please install aiohttp to use `AsyncInferenceClient` (`pip install aiohttp`)."
+        )
     import aiohttp
 
     return aiohttp
@@ -126,7 +133,9 @@ def _import_aiohttp():
 def _import_numpy():
     """Make sure `numpy` is installed on the machine."""
     if not is_numpy_available():
-        raise ImportError("Please install numpy to use deal with embeddings (`pip install numpy`).")
+        raise ImportError(
+            "Please install numpy to use deal with embeddings (`pip install numpy`)."
+        )
     import numpy
 
     return numpy
@@ -160,7 +169,9 @@ def _open_as_binary(
 
 
 @contextmanager  # type: ignore
-def _open_as_binary(content: Optional[ContentT]) -> Generator[Optional[BinaryT], None, None]:
+def _open_as_binary(
+    content: Optional[ContentT],
+) -> Generator[Optional[BinaryT], None, None]:
     """Open `content` as a binary file, either from a URL, a local path, raw bytes, or a PIL Image.
 
     Do nothing if `content` is None.
@@ -171,7 +182,9 @@ def _open_as_binary(content: Optional[ContentT]) -> Generator[Optional[BinaryT],
     if isinstance(content, str):
         if content.startswith("https://") or content.startswith("http://"):
             logger.debug(f"Downloading content from {content}")
-            yield get_session().get(content).content  # TODO: retrieve as stream and pipe to post request ?
+            yield get_session().get(
+                content
+            ).content  # TODO: retrieve as stream and pipe to post request ?
             return
         content = Path(content)
         if not content.exists():
@@ -210,7 +223,9 @@ def _b64_encode(content: ContentT) -> str:
 
 
 def _as_url(content: ContentT, default_mime_type: str) -> str:
-    if isinstance(content, str) and (content.startswith("https://") or content.startswith("http://")):
+    if isinstance(content, str) and (
+        content.startswith("https://") or content.startswith("http://")
+    ):
         return content
 
     # Handle MIME type detection for different content types
@@ -319,7 +334,9 @@ def _format_text_generation_stream_output(
 
     # Either an error as being returned
     if json_payload.get("error") is not None:
-        raise _parse_text_generation_error(json_payload["error"], json_payload.get("error_type"))
+        raise _parse_text_generation_error(
+            json_payload["error"], json_payload.get("error_type")
+        )
 
     # Or parse token payload
     output = TextGenerationStreamOutput.parse_obj_as_instance(json_payload)
@@ -367,13 +384,17 @@ def _format_chat_completion_stream_output(
 
     # Either an error as being returned
     if json_payload.get("error") is not None:
-        raise _parse_text_generation_error(json_payload["error"], json_payload.get("error_type"))
+        raise _parse_text_generation_error(
+            json_payload["error"], json_payload.get("error_type")
+        )
 
     # Or parse token payload
     return ChatCompletionStreamOutput.parse_obj_as_instance(json_payload)
 
 
-async def _async_yield_from(client: "ClientSession", response: "ClientResponse") -> AsyncIterable[bytes]:
+async def _async_yield_from(
+    client: "ClientSession", response: "ClientResponse"
+) -> AsyncIterable[bytes]:
     try:
         async for byte_payload in response.content:
             yield byte_payload.strip()
@@ -403,7 +424,9 @@ async def _async_yield_from(client: "ClientSession", response: "ClientResponse")
 _UNSUPPORTED_TEXT_GENERATION_KWARGS: Dict[Optional[str], List[str]] = {}
 
 
-def _set_unsupported_text_generation_kwargs(model: Optional[str], unsupported_kwargs: List[str]) -> None:
+def _set_unsupported_text_generation_kwargs(
+    model: Optional[str], unsupported_kwargs: List[str]
+) -> None:
     _UNSUPPORTED_TEXT_GENERATION_KWARGS.setdefault(model, []).extend(unsupported_kwargs)
 
 
@@ -430,7 +453,10 @@ def raise_text_generation_error(http_error: HTTPError) -> NoReturn:
 
     try:
         # Hacky way to retrieve payload in case of aiohttp error
-        payload = getattr(http_error, "response_error_payload", None) or http_error.response.json()
+        payload = (
+            getattr(http_error, "response_error_payload", None)
+            or http_error.response.json()
+        )
         error = payload.get("error")
         error_type = payload.get("error_type")
     except Exception:  # no payload
@@ -445,7 +471,9 @@ def raise_text_generation_error(http_error: HTTPError) -> NoReturn:
     raise http_error
 
 
-def _parse_text_generation_error(error: Optional[str], error_type: Optional[str]) -> TextGenerationError:
+def _parse_text_generation_error(
+    error: Optional[str], error_type: Optional[str]
+) -> TextGenerationError:
     if error_type == "generation":
         return GenerationError(error)  # type: ignore
     if error_type == "incomplete_generation":

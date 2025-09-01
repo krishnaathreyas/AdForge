@@ -29,7 +29,12 @@ from urllib.parse import quote
 
 from . import constants
 from ._commit_api import CommitOperationAdd, UploadInfo, _fetch_upload_modes
-from ._local_folder import LocalUploadFileMetadata, LocalUploadFilePaths, get_local_upload_paths, read_upload_metadata
+from ._local_folder import (
+    LocalUploadFileMetadata,
+    LocalUploadFilePaths,
+    get_local_upload_paths,
+    read_upload_metadata,
+)
 from .constants import DEFAULT_REVISION, REPO_TYPES
 from .utils import DEFAULT_IGNORE_PATTERNS, filter_repo_objects, tqdm
 from .utils._cache_manager import _format_size
@@ -85,7 +90,9 @@ def _validate_upload_limits(paths_list: List[LocalUploadFilePaths]) -> None:
     # Track immediate children (files and subdirs) for each folder
     from collections import defaultdict
 
-    entries_per_folder: Dict[str, Any] = defaultdict(lambda: {"files": 0, "subdirs": set()})
+    entries_per_folder: Dict[str, Any] = defaultdict(
+        lambda: {"files": 0, "subdirs": set()}
+    )
 
     for paths in paths_list:
         path = Path(paths.path_in_repo)
@@ -131,8 +138,14 @@ def _validate_upload_limits(paths_list: List[LocalUploadFilePaths]) -> None:
 
     # Warn about very large files (>50GB)
     if very_large_files:
-        files_str = "\n  - ".join(f"{path}: {size:.1f}GB" for path, size in very_large_files[:5])
-        more_str = f"\n  ... and {len(very_large_files) - 5} more files" if len(very_large_files) > 5 else ""
+        files_str = "\n  - ".join(
+            f"{path}: {size:.1f}GB" for path, size in very_large_files[:5]
+        )
+        more_str = (
+            f"\n  ... and {len(very_large_files) - 5} more files"
+            if len(very_large_files) > 5
+            else ""
+        )
         logger.warning(
             f"Found {len(very_large_files)} files exceeding the {MAX_FILE_SIZE_GB}GB hard limit:\n"
             f"  - {files_str}{more_str}\n"
@@ -141,8 +154,14 @@ def _validate_upload_limits(paths_list: List[LocalUploadFilePaths]) -> None:
 
     # Warn about large files (>20GB)
     if large_files:
-        files_str = "\n  - ".join(f"{path}: {size:.1f}GB" for path, size in large_files[:5])
-        more_str = f"\n  ... and {len(large_files) - 5} more files" if len(large_files) > 5 else ""
+        files_str = "\n  - ".join(
+            f"{path}: {size:.1f}GB" for path, size in large_files[:5]
+        )
+        more_str = (
+            f"\n  ... and {len(large_files) - 5} more files"
+            if len(large_files) > 5
+            else ""
+        )
         logger.warning(
             f"Found {len(large_files)} files larger than {RECOMMENDED_FILE_SIZE_GB}GB (recommended limit):\n"
             f"  - {files_str}{more_str}\n"
@@ -196,7 +215,9 @@ def upload_large_folder_internal(
         num_workers = max(nb_cores - 2, 2)  # Use all but 2 cores, or at least 2 cores
 
     # 2. Create repo if missing
-    repo_url = api.create_repo(repo_id=repo_id, repo_type=repo_type, private=private, exist_ok=True)
+    repo_url = api.create_repo(
+        repo_id=repo_id, repo_type=repo_type, private=private, exist_ok=True
+    )
     logger.info(f"Repo created: {repo_url}")
     repo_id = repo_url.repo_id
     # 2.1 Check if xet is enabled to set batch file upload size
@@ -209,15 +230,23 @@ def upload_large_folder_internal(
             expand="xetEnabled",
         ).xet_enabled
     )
-    upload_batch_size = UPLOAD_BATCH_SIZE_XET if is_xet_enabled else UPLOAD_BATCH_SIZE_LFS
+    upload_batch_size = (
+        UPLOAD_BATCH_SIZE_XET if is_xet_enabled else UPLOAD_BATCH_SIZE_LFS
+    )
 
     # 3. List files to upload
     filtered_paths_list = filter_repo_objects(
-        (path.relative_to(folder_path).as_posix() for path in folder_path.glob("**/*") if path.is_file()),
+        (
+            path.relative_to(folder_path).as_posix()
+            for path in folder_path.glob("**/*")
+            if path.is_file()
+        ),
         allow_patterns=allow_patterns,
         ignore_patterns=ignore_patterns,
     )
-    paths_list = [get_local_upload_paths(folder_path, relpath) for relpath in filtered_paths_list]
+    paths_list = [
+        get_local_upload_paths(folder_path, relpath) for relpath in filtered_paths_list
+    ]
     logger.info(f"Found {len(paths_list)} candidate files to upload")
 
     # Validate upload against repository limits
@@ -322,7 +351,9 @@ class LargeUploadStatus:
             elif not metadata.is_committed:
                 self.queue_commit.put(item)
             else:
-                logger.debug(f"Skipping file {paths.path_in_repo} (already uploaded and committed)")
+                logger.debug(
+                    f"Skipping file {paths.path_in_repo} (already uploaded and committed)"
+                )
 
     def target_chunk(self) -> int:
         with self._chunk_lock:
@@ -331,10 +362,14 @@ class LargeUploadStatus:
     def update_chunk(self, success: bool, nb_items: int, duration: float) -> None:
         with self._chunk_lock:
             if not success:
-                logger.warning(f"Failed to commit {nb_items} files at once. Will retry with less files in next batch.")
+                logger.warning(
+                    f"Failed to commit {nb_items} files at once. Will retry with less files in next batch."
+                )
                 self._chunk_idx -= 1
             elif nb_items >= COMMIT_SIZE_SCALE[self._chunk_idx] and duration < 40:
-                logger.info(f"Successfully committed {nb_items} at once. Increasing the limit for next batch.")
+                logger.info(
+                    f"Successfully committed {nb_items} at once. Increasing the limit for next batch."
+                )
                 self._chunk_idx += 1
 
             self._chunk_idx = max(0, min(self._chunk_idx, len(COMMIT_SIZE_SCALE) - 1))
@@ -404,7 +439,10 @@ class LargeUploadStatus:
 
     def is_done(self) -> bool:
         with self.lock:
-            return all(metadata.is_committed or metadata.should_ignore for _, metadata in self.items)
+            return all(
+                metadata.is_committed or metadata.should_ignore
+                for _, metadata in self.items
+            )
 
 
 def _worker_job(
@@ -449,7 +487,13 @@ def _worker_job(
 
         elif job == WorkerJob.GET_UPLOAD_MODE:
             try:
-                _get_upload_mode(items, api=api, repo_id=repo_id, repo_type=repo_type, revision=revision)
+                _get_upload_mode(
+                    items,
+                    api=api,
+                    repo_id=repo_id,
+                    repo_type=repo_type,
+                    revision=revision,
+                )
             except KeyboardInterrupt:
                 raise
             except Exception as e:
@@ -477,7 +521,13 @@ def _worker_job(
 
         elif job == WorkerJob.PREUPLOAD_LFS:
             try:
-                _preupload_lfs(items, api=api, repo_id=repo_id, repo_type=repo_type, revision=revision)
+                _preupload_lfs(
+                    items,
+                    api=api,
+                    repo_id=repo_id,
+                    repo_type=repo_type,
+                    revision=revision,
+                )
                 for item in items:
                     status.queue_commit.put(item)
             except KeyboardInterrupt:
@@ -495,7 +545,13 @@ def _worker_job(
             start_ts = time.time()
             success = True
             try:
-                _commit(items, api=api, repo_id=repo_id, repo_type=repo_type, revision=revision)
+                _commit(
+                    items,
+                    api=api,
+                    repo_id=repo_id,
+                    repo_type=repo_type,
+                    revision=revision,
+                )
             except KeyboardInterrupt:
                 raise
             except Exception as e:
@@ -516,7 +572,9 @@ def _worker_job(
                 status.nb_workers_waiting -= 1
 
 
-def _determine_next_job(status: LargeUploadStatus) -> Optional[Tuple[WorkerJob, List[JOB_ITEM_T]]]:
+def _determine_next_job(
+    status: LargeUploadStatus,
+) -> Optional[Tuple[WorkerJob, List[JOB_ITEM_T]]]:
     with status.lock:
         # 1. Commit if more than 5 minutes since last commit attempt (and at least 1 file)
         if (
@@ -527,25 +585,42 @@ def _determine_next_job(status: LargeUploadStatus) -> Optional[Tuple[WorkerJob, 
         ):
             status.nb_workers_commit += 1
             logger.debug("Job: commit (more than 5 minutes since last commit attempt)")
-            return (WorkerJob.COMMIT, _get_n(status.queue_commit, status.target_chunk()))
+            return (
+                WorkerJob.COMMIT,
+                _get_n(status.queue_commit, status.target_chunk()),
+            )
 
         # 2. Commit if at least 100 files are ready to commit
         elif status.nb_workers_commit == 0 and status.queue_commit.qsize() >= 150:
             status.nb_workers_commit += 1
             logger.debug("Job: commit (>100 files ready)")
-            return (WorkerJob.COMMIT, _get_n(status.queue_commit, status.target_chunk()))
+            return (
+                WorkerJob.COMMIT,
+                _get_n(status.queue_commit, status.target_chunk()),
+            )
 
         # 3. Get upload mode if at least 100 files
         elif status.queue_get_upload_mode.qsize() >= MAX_NB_FILES_FETCH_UPLOAD_MODE:
             status.nb_workers_get_upload_mode += 1
-            logger.debug(f"Job: get upload mode (>{MAX_NB_FILES_FETCH_UPLOAD_MODE} files ready)")
-            return (WorkerJob.GET_UPLOAD_MODE, _get_n(status.queue_get_upload_mode, MAX_NB_FILES_FETCH_UPLOAD_MODE))
+            logger.debug(
+                f"Job: get upload mode (>{MAX_NB_FILES_FETCH_UPLOAD_MODE} files ready)"
+            )
+            return (
+                WorkerJob.GET_UPLOAD_MODE,
+                _get_n(status.queue_get_upload_mode, MAX_NB_FILES_FETCH_UPLOAD_MODE),
+            )
 
         # 4. Preupload LFS file if at least `status.upload_batch_size` files and no worker is preuploading LFS
-        elif status.queue_preupload_lfs.qsize() >= status.upload_batch_size and status.nb_workers_preupload_lfs == 0:
+        elif (
+            status.queue_preupload_lfs.qsize() >= status.upload_batch_size
+            and status.nb_workers_preupload_lfs == 0
+        ):
             status.nb_workers_preupload_lfs += 1
             logger.debug("Job: preupload LFS (no other worker preuploading LFS)")
-            return (WorkerJob.PREUPLOAD_LFS, _get_n(status.queue_preupload_lfs, status.upload_batch_size))
+            return (
+                WorkerJob.PREUPLOAD_LFS,
+                _get_n(status.queue_preupload_lfs, status.upload_batch_size),
+            )
 
         # 5. Compute sha256 if at least 1 file and no worker is computing sha256
         elif status.queue_sha256.qsize() > 0 and status.nb_workers_sha256 == 0:
@@ -554,19 +629,29 @@ def _determine_next_job(status: LargeUploadStatus) -> Optional[Tuple[WorkerJob, 
             return (WorkerJob.SHA256, _get_one(status.queue_sha256))
 
         # 6. Get upload mode if at least 1 file and no worker is getting upload mode
-        elif status.queue_get_upload_mode.qsize() > 0 and status.nb_workers_get_upload_mode == 0:
+        elif (
+            status.queue_get_upload_mode.qsize() > 0
+            and status.nb_workers_get_upload_mode == 0
+        ):
             status.nb_workers_get_upload_mode += 1
             logger.debug("Job: get upload mode (no other worker getting upload mode)")
-            return (WorkerJob.GET_UPLOAD_MODE, _get_n(status.queue_get_upload_mode, MAX_NB_FILES_FETCH_UPLOAD_MODE))
+            return (
+                WorkerJob.GET_UPLOAD_MODE,
+                _get_n(status.queue_get_upload_mode, MAX_NB_FILES_FETCH_UPLOAD_MODE),
+            )
 
         # 7. Preupload LFS file if at least `status.upload_batch_size` files
         #    Skip if hf_transfer is enabled and there is already a worker preuploading LFS
         elif status.queue_preupload_lfs.qsize() >= status.upload_batch_size and (
-            status.nb_workers_preupload_lfs == 0 or not constants.HF_HUB_ENABLE_HF_TRANSFER
+            status.nb_workers_preupload_lfs == 0
+            or not constants.HF_HUB_ENABLE_HF_TRANSFER
         ):
             status.nb_workers_preupload_lfs += 1
             logger.debug("Job: preupload LFS")
-            return (WorkerJob.PREUPLOAD_LFS, _get_n(status.queue_preupload_lfs, status.upload_batch_size))
+            return (
+                WorkerJob.PREUPLOAD_LFS,
+                _get_n(status.queue_preupload_lfs, status.upload_batch_size),
+            )
 
         # 8. Compute sha256 if at least 1 file
         elif status.queue_sha256.qsize() > 0:
@@ -578,13 +663,19 @@ def _determine_next_job(status: LargeUploadStatus) -> Optional[Tuple[WorkerJob, 
         elif status.queue_get_upload_mode.qsize() > 0:
             status.nb_workers_get_upload_mode += 1
             logger.debug("Job: get upload mode")
-            return (WorkerJob.GET_UPLOAD_MODE, _get_n(status.queue_get_upload_mode, MAX_NB_FILES_FETCH_UPLOAD_MODE))
+            return (
+                WorkerJob.GET_UPLOAD_MODE,
+                _get_n(status.queue_get_upload_mode, MAX_NB_FILES_FETCH_UPLOAD_MODE),
+            )
 
         # 10. Preupload LFS file if at least 1 file
         elif status.queue_preupload_lfs.qsize() > 0:
             status.nb_workers_preupload_lfs += 1
             logger.debug("Job: preupload LFS")
-            return (WorkerJob.PREUPLOAD_LFS, _get_n(status.queue_preupload_lfs, status.upload_batch_size))
+            return (
+                WorkerJob.PREUPLOAD_LFS,
+                _get_n(status.queue_preupload_lfs, status.upload_batch_size),
+            )
 
         # 11. Commit if at least 1 file and 1 min since last commit attempt
         elif (
@@ -595,7 +686,10 @@ def _determine_next_job(status: LargeUploadStatus) -> Optional[Tuple[WorkerJob, 
         ):
             status.nb_workers_commit += 1
             logger.debug("Job: commit (1 min since last commit attempt)")
-            return (WorkerJob.COMMIT, _get_n(status.queue_commit, status.target_chunk()))
+            return (
+                WorkerJob.COMMIT,
+                _get_n(status.queue_commit, status.target_chunk()),
+            )
 
         # 12. Commit if at least 1 file all other queues are empty and all workers are waiting
         #     e.g. when it's the last commit
@@ -611,10 +705,16 @@ def _determine_next_job(status: LargeUploadStatus) -> Optional[Tuple[WorkerJob, 
         ):
             status.nb_workers_commit += 1
             logger.debug("Job: commit")
-            return (WorkerJob.COMMIT, _get_n(status.queue_commit, status.target_chunk()))
+            return (
+                WorkerJob.COMMIT,
+                _get_n(status.queue_commit, status.target_chunk()),
+            )
 
         # 13. If all queues are empty, exit
-        elif all(metadata.is_committed or metadata.should_ignore for _, metadata in status.items):
+        elif all(
+            metadata.is_committed or metadata.should_ignore
+            for _, metadata in status.items
+        ):
             logger.info("All files have been processed! Exiting worker.")
             return None
 
@@ -639,7 +739,9 @@ def _compute_sha256(item: JOB_ITEM_T) -> None:
     metadata.save(paths)
 
 
-def _get_upload_mode(items: List[JOB_ITEM_T], api: "HfApi", repo_id: str, repo_type: str, revision: str) -> None:
+def _get_upload_mode(
+    items: List[JOB_ITEM_T], api: "HfApi", repo_id: str, repo_type: str, revision: str
+) -> None:
     """Get upload mode for each file and update metadata.
 
     Also receive info if the file should be ignored.
@@ -661,7 +763,9 @@ def _get_upload_mode(items: List[JOB_ITEM_T], api: "HfApi", repo_id: str, repo_t
         metadata.save(paths)
 
 
-def _preupload_lfs(items: List[JOB_ITEM_T], api: "HfApi", repo_id: str, repo_type: str, revision: str) -> None:
+def _preupload_lfs(
+    items: List[JOB_ITEM_T], api: "HfApi", repo_id: str, repo_type: str, revision: str
+) -> None:
     """Preupload LFS files and update metadata."""
     additions = [_build_hacky_operation(item) for item in items]
     api.preupload_lfs_files(
@@ -676,7 +780,9 @@ def _preupload_lfs(items: List[JOB_ITEM_T], api: "HfApi", repo_id: str, repo_typ
         metadata.save(paths)
 
 
-def _commit(items: List[JOB_ITEM_T], api: "HfApi", repo_id: str, repo_type: str, revision: str) -> None:
+def _commit(
+    items: List[JOB_ITEM_T], api: "HfApi", repo_id: str, repo_type: str, revision: str
+) -> None:
     """Commit files to the repo."""
     additions = [_build_hacky_operation(item) for item in items]
     api.create_commit(
@@ -704,12 +810,16 @@ class HackyCommitOperationAdd(CommitOperationAdd):
 
 def _build_hacky_operation(item: JOB_ITEM_T) -> HackyCommitOperationAdd:
     paths, metadata = item
-    operation = HackyCommitOperationAdd(path_in_repo=paths.path_in_repo, path_or_fileobj=paths.file_path)
+    operation = HackyCommitOperationAdd(
+        path_in_repo=paths.path_in_repo, path_or_fileobj=paths.file_path
+    )
     with paths.file_path.open("rb") as file:
         sample = file.peek(512)[:512]
     if metadata.sha256 is None:
         raise ValueError("sha256 must have been computed by now!")
-    operation.upload_info = UploadInfo(sha256=bytes.fromhex(metadata.sha256), size=metadata.size, sample=sample)
+    operation.upload_info = UploadInfo(
+        sha256=bytes.fromhex(metadata.sha256), size=metadata.size, sample=sample
+    )
     operation._upload_mode = metadata.upload_mode  # type: ignore[assignment]
     operation._should_ignore = metadata.should_ignore
     operation._remote_oid = metadata.remote_oid

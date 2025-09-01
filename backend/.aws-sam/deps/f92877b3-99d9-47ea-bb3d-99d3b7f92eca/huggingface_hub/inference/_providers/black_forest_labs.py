@@ -16,7 +16,11 @@ POLLING_INTERVAL = 1.0
 
 class BlackForestLabsTextToImageTask(TaskProviderHelper):
     def __init__(self):
-        super().__init__(provider="black-forest-labs", base_url="https://api.us1.bfl.ai", task="text-to-image")
+        super().__init__(
+            provider="black-forest-labs",
+            base_url="https://api.us1.bfl.ai",
+            task="text-to-image",
+        )
 
     def _prepare_headers(self, headers: Dict, api_key: str) -> Dict:
         headers = super()._prepare_headers(headers, api_key)
@@ -29,7 +33,10 @@ class BlackForestLabsTextToImageTask(TaskProviderHelper):
         return f"/v1/{mapped_model}"
 
     def _prepare_payload_as_dict(
-        self, inputs: Any, parameters: Dict, provider_mapping_info: InferenceProviderMapping
+        self,
+        inputs: Any,
+        parameters: Dict,
+        provider_mapping_info: InferenceProviderMapping,
     ) -> Optional[Dict]:
         parameters = filter_none(parameters)
         if "num_inference_steps" in parameters:
@@ -39,7 +46,11 @@ class BlackForestLabsTextToImageTask(TaskProviderHelper):
 
         return {"prompt": inputs, **parameters}
 
-    def get_response(self, response: Union[bytes, Dict], request_params: Optional[RequestParameters] = None) -> Any:
+    def get_response(
+        self,
+        response: Union[bytes, Dict],
+        request_params: Optional[RequestParameters] = None,
+    ) -> Any:
         """
         Polling mechanism for Black Forest Labs since the API is asynchronous.
         """
@@ -66,4 +77,6 @@ class BlackForestLabsTextToImageTask(TaskProviderHelper):
                 image_resp.raise_for_status()
                 return image_resp.content
 
-        raise TimeoutError(f"Failed to get the image URL after {MAX_POLLING_ATTEMPTS} attempts.")
+        raise TimeoutError(
+            f"Failed to get the image URL after {MAX_POLLING_ATTEMPTS} attempts."
+        )

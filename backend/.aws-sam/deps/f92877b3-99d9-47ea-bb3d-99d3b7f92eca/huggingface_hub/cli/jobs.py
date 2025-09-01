@@ -56,7 +56,9 @@ class JobsCommands(BaseHuggingfaceCLICommand):
     @staticmethod
     def register_subcommand(parser: _SubParsersAction):
         jobs_parser = parser.add_parser("jobs", help="Run and manage Jobs on the Hub.")
-        jobs_subparsers = jobs_parser.add_subparsers(help="huggingface.co jobs related commands")
+        jobs_subparsers = jobs_parser.add_subparsers(
+            help="huggingface.co jobs related commands"
+        )
 
         # Show help if no subcommand is provided
         jobs_parser.set_defaults(func=lambda args: jobs_parser.print_help())
@@ -75,7 +77,12 @@ class RunCommand(BaseHuggingfaceCLICommand):
     def register_subcommand(parser: _SubParsersAction) -> None:
         run_parser = parser.add_parser("run", help="Run a Job")
         run_parser.add_argument("image", type=str, help="The Docker image to use.")
-        run_parser.add_argument("-e", "--env", action="append", help="Set environment variables. E.g. --env ENV=value")
+        run_parser.add_argument(
+            "-e",
+            "--env",
+            action="append",
+            help="Set environment variables. E.g. --env ENV=value",
+        )
         run_parser.add_argument(
             "-s",
             "--secrets",
@@ -85,8 +92,14 @@ class RunCommand(BaseHuggingfaceCLICommand):
                 "or `--secrets HF_TOKEN` to pass your Hugging Face token."
             ),
         )
-        run_parser.add_argument("--env-file", type=str, help="Read in a file of environment variables.")
-        run_parser.add_argument("--secrets-file", type=str, help="Read in a file of secret environment variables.")
+        run_parser.add_argument(
+            "--env-file", type=str, help="Read in a file of environment variables."
+        )
+        run_parser.add_argument(
+            "--secrets-file",
+            type=str,
+            help="Read in a file of secret environment variables.",
+        )
         run_parser.add_argument(
             "--flavor",
             type=str,
@@ -121,13 +134,19 @@ class RunCommand(BaseHuggingfaceCLICommand):
         self.command: List[str] = args.command
         self.env: dict[str, Optional[str]] = {}
         if args.env_file:
-            self.env.update(load_dotenv(Path(args.env_file).read_text(), environ=os.environ.copy()))
+            self.env.update(
+                load_dotenv(Path(args.env_file).read_text(), environ=os.environ.copy())
+            )
         for env_value in args.env or []:
             self.env.update(load_dotenv(env_value, environ=os.environ.copy()))
         self.secrets: dict[str, Optional[str]] = {}
         extended_environ = _get_extended_environ()
         if args.secrets_file:
-            self.secrets.update(load_dotenv(Path(args.secrets_file).read_text(), environ=extended_environ))
+            self.secrets.update(
+                load_dotenv(
+                    Path(args.secrets_file).read_text(), environ=extended_environ
+                )
+            )
         for secret in args.secrets or []:
             self.secrets.update(load_dotenv(secret, environ=extended_environ))
         self.flavor: Optional[SpaceHardware] = args.flavor
@@ -170,7 +189,9 @@ class LogsCommand(BaseHuggingfaceCLICommand):
             help="The namespace where the job is running. Defaults to the current user's namespace.",
         )
         run_parser.add_argument(
-            "--token", type=str, help="A User Access Token generated from https://huggingface.co/settings/tokens"
+            "--token",
+            type=str,
+            help="A User Access Token generated from https://huggingface.co/settings/tokens",
         )
         run_parser.set_defaults(func=LogsCommand)
 
@@ -198,7 +219,12 @@ def _tabulate(rows: List[List[Union[str, int]]], headers: List[str]) -> str:
         col_to_minimize = col_widths.index(max(col_widths))
         col_widths[col_to_minimize] //= 2
         if len(headers) + sum(col_widths) <= terminal_width:
-            col_widths[col_to_minimize] = terminal_width - sum(col_widths) - len(headers) + col_widths[col_to_minimize]
+            col_widths[col_to_minimize] = (
+                terminal_width
+                - sum(col_widths)
+                - len(headers)
+                + col_widths[col_to_minimize]
+            )
     row_format = ("{{:{}}} " * len(headers)).format(*col_widths)
     lines = []
     lines.append(row_format.format(*headers))
@@ -261,7 +287,9 @@ class PsCommand(BaseHuggingfaceCLICommand):
                 key, value = f.split("=", 1)
                 self.filters[key.lower()] = value
             else:
-                print(f"Warning: Ignoring invalid filter format '{f}'. Use key=value format.")
+                print(
+                    f"Warning: Ignoring invalid filter format '{f}'. Use key=value format."
+                )
 
     def run(self) -> None:
         """
@@ -346,7 +374,9 @@ class PsCommand(BaseHuggingfaceCLICommand):
             if "*" in pattern or "?" in pattern:
                 # Convert glob pattern to regex
                 regex_pattern = pattern.replace("*", ".*").replace("?", ".")
-                if not re.search(f"^{regex_pattern}$", job_properties[key], re.IGNORECASE):
+                if not re.search(
+                    f"^{regex_pattern}$", job_properties[key], re.IGNORECASE
+                ):
                     return False
             # Simple substring matching
             elif pattern.lower() not in job_properties[key].lower():
@@ -361,7 +391,9 @@ class PsCommand(BaseHuggingfaceCLICommand):
             template = self.format
             for row in rows:
                 line = template
-                for i, field in enumerate(["id", "image", "command", "created", "status"]):
+                for i, field in enumerate(
+                    ["id", "image", "command", "created", "status"]
+                ):
                     placeholder = f"{{{{.{field}}}}}"
                     if placeholder in line:
                         line = line.replace(placeholder, str(row[i]))
@@ -379,14 +411,18 @@ class PsCommand(BaseHuggingfaceCLICommand):
 class InspectCommand(BaseHuggingfaceCLICommand):
     @staticmethod
     def register_subcommand(parser: _SubParsersAction) -> None:
-        run_parser = parser.add_parser("inspect", help="Display detailed information on one or more Jobs")
+        run_parser = parser.add_parser(
+            "inspect", help="Display detailed information on one or more Jobs"
+        )
         run_parser.add_argument(
             "--namespace",
             type=str,
             help="The namespace where the job is running. Defaults to the current user's namespace.",
         )
         run_parser.add_argument(
-            "--token", type=str, help="A User Access Token generated from https://huggingface.co/settings/tokens"
+            "--token",
+            type=str,
+            help="A User Access Token generated from https://huggingface.co/settings/tokens",
         )
         run_parser.add_argument("job_ids", nargs="...", help="The jobs to inspect")
         run_parser.set_defaults(func=InspectCommand)
@@ -398,7 +434,10 @@ class InspectCommand(BaseHuggingfaceCLICommand):
 
     def run(self) -> None:
         api = HfApi(token=self.token)
-        jobs = [api.inspect_job(job_id=job_id, namespace=self.namespace) for job_id in self.job_ids]
+        jobs = [
+            api.inspect_job(job_id=job_id, namespace=self.namespace)
+            for job_id in self.job_ids
+        ]
         print(json.dumps([asdict(job) for job in jobs], indent=4, default=str))
 
 
@@ -413,7 +452,9 @@ class CancelCommand(BaseHuggingfaceCLICommand):
             help="The namespace where the job is running. Defaults to the current user's namespace.",
         )
         run_parser.add_argument(
-            "--token", type=str, help="A User Access Token generated from https://huggingface.co/settings/tokens"
+            "--token",
+            type=str,
+            help="A User Access Token generated from https://huggingface.co/settings/tokens",
         )
         run_parser.set_defaults(func=CancelCommand)
 
@@ -438,7 +479,9 @@ class UvCommand(BaseHuggingfaceCLICommand):
             help="Run UV scripts (Python with inline dependencies) on HF infrastructure",
         )
 
-        subparsers = uv_parser.add_subparsers(dest="uv_command", help="UV commands", required=True)
+        subparsers = uv_parser.add_subparsers(
+            dest="uv_command", help="UV commands", required=True
+        )
 
         # Run command only
         run_parser = subparsers.add_parser(
@@ -446,8 +489,12 @@ class UvCommand(BaseHuggingfaceCLICommand):
             help="Run a UV script (local file or URL) on HF infrastructure",
         )
         run_parser.add_argument("script", help="UV script to run (local file or URL)")
-        run_parser.add_argument("script_args", nargs="...", help="Arguments for the script", default=[])
-        run_parser.add_argument("--image", type=str, help="Use a custom Docker image with `uv` installed.")
+        run_parser.add_argument(
+            "script_args", nargs="...", help="Arguments for the script", default=[]
+        )
+        run_parser.add_argument(
+            "--image", type=str, help="Use a custom Docker image with `uv` installed."
+        )
         run_parser.add_argument(
             "--repo",
             help="Repository name for the script (creates ephemeral if not specified)",
@@ -457,7 +504,9 @@ class UvCommand(BaseHuggingfaceCLICommand):
             type=str,
             help=f"Flavor for the hardware, as in HF Spaces. Defaults to `cpu-basic`. Possible values: {', '.join(SUGGESTED_FLAVORS)}.",
         )
-        run_parser.add_argument("-e", "--env", action="append", help="Environment variables")
+        run_parser.add_argument(
+            "-e", "--env", action="append", help="Environment variables"
+        )
         run_parser.add_argument(
             "-s",
             "--secrets",
@@ -467,14 +516,20 @@ class UvCommand(BaseHuggingfaceCLICommand):
                 "or `--secrets HF_TOKEN` to pass your Hugging Face token."
             ),
         )
-        run_parser.add_argument("--env-file", type=str, help="Read in a file of environment variables.")
+        run_parser.add_argument(
+            "--env-file", type=str, help="Read in a file of environment variables."
+        )
         run_parser.add_argument(
             "--secrets-file",
             type=str,
             help="Read in a file of secret environment variables.",
         )
-        run_parser.add_argument("--timeout", type=str, help="Max duration (e.g., 30s, 5m, 1h)")
-        run_parser.add_argument("-d", "--detach", action="store_true", help="Run in background")
+        run_parser.add_argument(
+            "--timeout", type=str, help="Max duration (e.g., 30s, 5m, 1h)"
+        )
+        run_parser.add_argument(
+            "-d", "--detach", action="store_true", help="Run in background"
+        )
         run_parser.add_argument(
             "--namespace",
             type=str,
@@ -482,9 +537,17 @@ class UvCommand(BaseHuggingfaceCLICommand):
         )
         run_parser.add_argument("--token", type=str, help="HF token")
         # UV options
-        run_parser.add_argument("--with", action="append", help="Run with the given packages installed", dest="with_")
         run_parser.add_argument(
-            "-p", "--python", type=str, help="The Python interpreter to use for the run environment"
+            "--with",
+            action="append",
+            help="Run with the given packages installed",
+            dest="with_",
+        )
+        run_parser.add_argument(
+            "-p",
+            "--python",
+            type=str,
+            help="The Python interpreter to use for the run environment",
         )
         run_parser.set_defaults(func=UvCommand)
 
@@ -497,13 +560,19 @@ class UvCommand(BaseHuggingfaceCLICommand):
         self.image = args.image
         self.env: dict[str, Optional[str]] = {}
         if args.env_file:
-            self.env.update(load_dotenv(Path(args.env_file).read_text(), environ=os.environ.copy()))
+            self.env.update(
+                load_dotenv(Path(args.env_file).read_text(), environ=os.environ.copy())
+            )
         for env_value in args.env or []:
             self.env.update(load_dotenv(env_value, environ=os.environ.copy()))
         self.secrets: dict[str, Optional[str]] = {}
         extended_environ = _get_extended_environ()
         if args.secrets_file:
-            self.secrets.update(load_dotenv(Path(args.secrets_file).read_text(), environ=extended_environ))
+            self.secrets.update(
+                load_dotenv(
+                    Path(args.secrets_file).read_text(), environ=extended_environ
+                )
+            )
         for secret in args.secrets or []:
             self.secrets.update(load_dotenv(secret, environ=extended_environ))
         self.flavor: Optional[SpaceHardware] = args.flavor

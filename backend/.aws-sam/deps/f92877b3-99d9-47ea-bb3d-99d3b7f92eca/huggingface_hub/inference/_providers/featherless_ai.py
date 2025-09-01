@@ -15,14 +15,21 @@ class FeatherlessTextGenerationTask(BaseTextGenerationTask):
         super().__init__(provider=_PROVIDER, base_url=_BASE_URL)
 
     def _prepare_payload_as_dict(
-        self, inputs: Any, parameters: Dict, provider_mapping_info: InferenceProviderMapping
+        self,
+        inputs: Any,
+        parameters: Dict,
+        provider_mapping_info: InferenceProviderMapping,
     ) -> Optional[Dict]:
         params = filter_none(parameters.copy())
         params["max_tokens"] = params.pop("max_new_tokens", None)
 
         return {"prompt": inputs, **params, "model": provider_mapping_info.provider_id}
 
-    def get_response(self, response: Union[bytes, Dict], request_params: Optional[RequestParameters] = None) -> Any:
+    def get_response(
+        self,
+        response: Union[bytes, Dict],
+        request_params: Optional[RequestParameters] = None,
+    ) -> Any:
         output = _as_dict(response)["choices"][0]
         return {
             "generated_text": output["text"],

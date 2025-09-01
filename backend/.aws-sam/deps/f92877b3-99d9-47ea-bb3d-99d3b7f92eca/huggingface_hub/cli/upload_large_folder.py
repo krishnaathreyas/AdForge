@@ -37,9 +37,13 @@ class UploadLargeFolderCommand(BaseHuggingfaceCLICommand):
             help="Upload a large folder to the Hub. Recommended for resumable uploads.",
         )
         subparser.add_argument(
-            "repo_id", type=str, help="The ID of the repo to upload to (e.g. `username/repo-name`)."
+            "repo_id",
+            type=str,
+            help="The ID of the repo to upload to (e.g. `username/repo-name`).",
         )
-        subparser.add_argument("local_path", type=str, help="Local path to the file or folder to upload.")
+        subparser.add_argument(
+            "local_path", type=str, help="Local path to the file or folder to upload."
+        )
         subparser.add_argument(
             "--repo-type",
             choices=["model", "dataset", "space"],
@@ -48,7 +52,9 @@ class UploadLargeFolderCommand(BaseHuggingfaceCLICommand):
         subparser.add_argument(
             "--revision",
             type=str,
-            help=("An optional Git revision to push to. It can be a branch name or a PR reference."),
+            help=(
+                "An optional Git revision to push to. It can be a branch name or a PR reference."
+            ),
         )
         subparser.add_argument(
             "--private",
@@ -57,16 +63,36 @@ class UploadLargeFolderCommand(BaseHuggingfaceCLICommand):
                 "Whether to create a private repo if repo doesn't exist on the Hub. Ignored if the repo already exists."
             ),
         )
-        subparser.add_argument("--include", nargs="*", type=str, help="Glob patterns to match files to upload.")
-        subparser.add_argument("--exclude", nargs="*", type=str, help="Glob patterns to exclude from files to upload.")
         subparser.add_argument(
-            "--token", type=str, help="A User Access Token generated from https://huggingface.co/settings/tokens"
+            "--include",
+            nargs="*",
+            type=str,
+            help="Glob patterns to match files to upload.",
         )
         subparser.add_argument(
-            "--num-workers", type=int, help="Number of workers to use to hash, upload and commit files."
+            "--exclude",
+            nargs="*",
+            type=str,
+            help="Glob patterns to exclude from files to upload.",
         )
-        subparser.add_argument("--no-report", action="store_true", help="Whether to disable regular status report.")
-        subparser.add_argument("--no-bars", action="store_true", help="Whether to disable progress bars.")
+        subparser.add_argument(
+            "--token",
+            type=str,
+            help="A User Access Token generated from https://huggingface.co/settings/tokens",
+        )
+        subparser.add_argument(
+            "--num-workers",
+            type=int,
+            help="Number of workers to use to hash, upload and commit files.",
+        )
+        subparser.add_argument(
+            "--no-report",
+            action="store_true",
+            help="Whether to disable regular status report.",
+        )
+        subparser.add_argument(
+            "--no-bars", action="store_true", help="Whether to disable progress bars."
+        )
         subparser.set_defaults(func=UploadLargeFolderCommand)
 
     def __init__(self, args: Namespace) -> None:

@@ -33,12 +33,25 @@ from .nebius import (
     NebiusTextGenerationTask,
     NebiusTextToImageTask,
 )
-from .novita import NovitaConversationalTask, NovitaTextGenerationTask, NovitaTextToVideoTask
+from .novita import (
+    NovitaConversationalTask,
+    NovitaTextGenerationTask,
+    NovitaTextToVideoTask,
+)
 from .nscale import NscaleConversationalTask, NscaleTextToImageTask
 from .openai import OpenAIConversationalTask
-from .replicate import ReplicateImageToImageTask, ReplicateTask, ReplicateTextToImageTask, ReplicateTextToSpeechTask
+from .replicate import (
+    ReplicateImageToImageTask,
+    ReplicateTask,
+    ReplicateTextToImageTask,
+    ReplicateTextToSpeechTask,
+)
 from .sambanova import SambanovaConversationalTask, SambanovaFeatureExtractionTask
-from .together import TogetherConversationalTask, TogetherTextGenerationTask, TogetherTextToImageTask
+from .together import (
+    TogetherConversationalTask,
+    TogetherTextGenerationTask,
+    TogetherTextToImageTask,
+)
 
 
 logger = logging.get_logger(__name__)
@@ -100,7 +113,9 @@ PROVIDERS: Dict[PROVIDER_T, Dict[str, TaskProviderHelper]] = {
         "text-classification": HFInferenceTask("text-classification"),
         "question-answering": HFInferenceTask("question-answering"),
         "audio-classification": HFInferenceBinaryInputTask("audio-classification"),
-        "automatic-speech-recognition": HFInferenceBinaryInputTask("automatic-speech-recognition"),
+        "automatic-speech-recognition": HFInferenceBinaryInputTask(
+            "automatic-speech-recognition"
+        ),
         "fill-mask": HFInferenceTask("fill-mask"),
         "feature-extraction": HFInferenceFeatureExtractionTask(),
         "image-classification": HFInferenceBinaryInputTask("image-classification"),
@@ -109,7 +124,9 @@ PROVIDERS: Dict[PROVIDER_T, Dict[str, TaskProviderHelper]] = {
         "image-to-text": HFInferenceBinaryInputTask("image-to-text"),
         "object-detection": HFInferenceBinaryInputTask("object-detection"),
         "audio-to-audio": HFInferenceBinaryInputTask("audio-to-audio"),
-        "zero-shot-image-classification": HFInferenceBinaryInputTask("zero-shot-image-classification"),
+        "zero-shot-image-classification": HFInferenceBinaryInputTask(
+            "zero-shot-image-classification"
+        ),
         "zero-shot-classification": HFInferenceTask("zero-shot-classification"),
         "image-to-image": HFInferenceBinaryInputTask("image-to-image"),
         "sentence-similarity": HFInferenceTask("sentence-similarity"),
@@ -119,7 +136,9 @@ PROVIDERS: Dict[PROVIDER_T, Dict[str, TaskProviderHelper]] = {
         "token-classification": HFInferenceTask("token-classification"),
         "translation": HFInferenceTask("translation"),
         "summarization": HFInferenceTask("summarization"),
-        "visual-question-answering": HFInferenceBinaryInputTask("visual-question-answering"),
+        "visual-question-answering": HFInferenceBinaryInputTask(
+            "visual-question-answering"
+        ),
     },
     "hyperbolic": {
         "text-to-image": HyperbolicTextToImageTask(),

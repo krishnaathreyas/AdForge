@@ -63,7 +63,10 @@ from .document_question_answering import (
     DocumentQuestionAnsweringOutputElement,
     DocumentQuestionAnsweringParameters,
 )
-from .feature_extraction import FeatureExtractionInput, FeatureExtractionInputTruncationDirection
+from .feature_extraction import (
+    FeatureExtractionInput,
+    FeatureExtractionInputTruncationDirection,
+)
 from .fill_mask import FillMaskInput, FillMaskOutputElement, FillMaskParameters
 from .image_classification import (
     ImageClassificationInput,
@@ -77,7 +80,12 @@ from .image_segmentation import (
     ImageSegmentationParameters,
     ImageSegmentationSubtask,
 )
-from .image_to_image import ImageToImageInput, ImageToImageOutput, ImageToImageParameters, ImageToImageTargetSize
+from .image_to_image import (
+    ImageToImageInput,
+    ImageToImageOutput,
+    ImageToImageParameters,
+    ImageToImageTargetSize,
+)
 from .image_to_text import (
     ImageToTextEarlyStoppingEnum,
     ImageToTextGenerationParameters,
@@ -85,7 +93,12 @@ from .image_to_text import (
     ImageToTextOutput,
     ImageToTextParameters,
 )
-from .image_to_video import ImageToVideoInput, ImageToVideoOutput, ImageToVideoParameters, ImageToVideoTargetSize
+from .image_to_video import (
+    ImageToVideoInput,
+    ImageToVideoOutput,
+    ImageToVideoParameters,
+    ImageToVideoTargetSize,
+)
 from .object_detection import (
     ObjectDetectionBoundingBox,
     ObjectDetectionInput,
@@ -161,7 +174,12 @@ from .token_classification import (
     TokenClassificationOutputElement,
     TokenClassificationParameters,
 )
-from .translation import TranslationInput, TranslationOutput, TranslationParameters, TranslationTruncationStrategy
+from .translation import (
+    TranslationInput,
+    TranslationOutput,
+    TranslationParameters,
+    TranslationTruncationStrategy,
+)
 from .video_classification import (
     VideoClassificationInput,
     VideoClassificationOutputElement,

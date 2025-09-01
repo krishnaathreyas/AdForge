@@ -10,6 +10,7 @@ class DecimalEncoder(json.JSONEncoder):
     Custom JSON encoder to handle the Decimal type returned by DynamoDB,
     which is not serializable by the default json library.
     """
+
     def default(self, obj):
         if isinstance(obj, Decimal):
             # Convert Decimal to int if it's a whole number, otherwise to float
@@ -22,8 +23,9 @@ class DecimalEncoder(json.JSONEncoder):
 
 
 # Initialize AWS clients
-dynamodb = boto3.resource('dynamodb')
-JOBS_TABLE_NAME = os.environ.get('JOBS_TABLE_NAME')
+dynamodb = boto3.resource("dynamodb")
+JOBS_TABLE_NAME = os.environ.get("JOBS_TABLE_NAME")
+
 
 def lambda_handler(event, context):
     """
@@ -43,30 +45,30 @@ def lambda_handler(event, context):
     """
     try:
         print("StatusFunction started...")
-        job_id = event['pathParameters']['jobId']
+        job_id = event["pathParameters"]["jobId"]
         print(f"Fetching status for Job ID: {job_id}")
 
         table = dynamodb.Table(JOBS_TABLE_NAME)
-        response = table.get_item(Key={'jobId': job_id})
-        item = response.get('Item', {})
+        response = table.get_item(Key={"jobId": job_id})
+        item = response.get("Item", {})
 
         if not item:
             return {
-                'statusCode': 404,
-                'body': json.dumps({"message": "Job not found."})
+                "statusCode": 404,
+                "body": json.dumps({"message": "Job not found."}),
             }
 
         # Return the full job item using our custom encoder
         return {
-            'statusCode': 200,
-            'headers': {'Content-Type': 'application/json'},
+            "statusCode": 200,
+            "headers": {"Content-Type": "application/json"},
             # Use cls=DecimalEncoder to handle the conversion
-            'body': json.dumps(item, cls=DecimalEncoder)
+            "body": json.dumps(item, cls=DecimalEncoder),
         }
 
     except Exception as e:
         print(f"A critical error occurred: {e}")
         return {
-            'statusCode': 500,
-            'body': json.dumps({"message": "Internal Server Error"}),
+            "statusCode": 500,
+            "body": json.dumps({"message": "Internal Server Error"}),
         }

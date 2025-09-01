@@ -76,7 +76,9 @@ class DeleteFilesSubCommand:
 class RepoFilesCommand(BaseHuggingfaceCLICommand):
     @staticmethod
     def register_subcommand(parser: _SubParsersAction):
-        repo_files_parser = parser.add_parser("repo-files", help="Manage files in a repo on the Hub.")
+        repo_files_parser = parser.add_parser(
+            "repo-files", help="Manage files in a repo on the Hub."
+        )
         repo_files_subparsers = repo_files_parser.add_subparsers(
             help="Action to execute against the files.",
             required=True,
@@ -87,7 +89,9 @@ class RepoFilesCommand(BaseHuggingfaceCLICommand):
         )
         delete_subparser.set_defaults(func=lambda args: DeleteFilesSubCommand(args))
         delete_subparser.add_argument(
-            "repo_id", type=str, help="The ID of the repo to manage (e.g. `username/repo-name`)."
+            "repo_id",
+            type=str,
+            help="The ID of the repo to manage (e.g. `username/repo-name`).",
         )
         delete_subparser.add_argument(
             "patterns",
@@ -111,13 +115,19 @@ class RepoFilesCommand(BaseHuggingfaceCLICommand):
             ),
         )
         delete_subparser.add_argument(
-            "--commit-message", type=str, help="The summary / title / first line of the generated commit."
+            "--commit-message",
+            type=str,
+            help="The summary / title / first line of the generated commit.",
         )
         delete_subparser.add_argument(
-            "--commit-description", type=str, help="The description of the generated commit."
+            "--commit-description",
+            type=str,
+            help="The description of the generated commit.",
         )
         delete_subparser.add_argument(
-            "--create-pr", action="store_true", help="Whether to create a new Pull Request for these changes."
+            "--create-pr",
+            action="store_true",
+            help="Whether to create a new Pull Request for these changes.",
         )
         delete_subparser.add_argument(
             "--token",

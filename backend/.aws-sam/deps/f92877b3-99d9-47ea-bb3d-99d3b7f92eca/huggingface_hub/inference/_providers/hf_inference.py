@@ -6,9 +6,19 @@ from urllib.parse import urlparse, urlunparse
 
 from huggingface_hub import constants
 from huggingface_hub.hf_api import InferenceProviderMapping
-from huggingface_hub.inference._common import RequestParameters, _b64_encode, _bytes_to_dict, _open_as_binary
+from huggingface_hub.inference._common import (
+    RequestParameters,
+    _b64_encode,
+    _bytes_to_dict,
+    _open_as_binary,
+)
 from huggingface_hub.inference._providers._common import TaskProviderHelper, filter_none
-from huggingface_hub.utils import build_hf_headers, get_session, get_token, hf_raise_for_status
+from huggingface_hub.utils import (
+    build_hf_headers,
+    get_session,
+    get_token,
+    hf_raise_for_status,
+)
 
 
 class HFInferenceTask(TaskProviderHelper):
@@ -28,9 +38,15 @@ class HFInferenceTask(TaskProviderHelper):
     def _prepare_mapping_info(self, model: Optional[str]) -> InferenceProviderMapping:
         if model is not None and model.startswith(("http://", "https://")):
             return InferenceProviderMapping(
-                provider="hf-inference", providerId=model, hf_model_id=model, task=self.task, status="live"
+                provider="hf-inference",
+                providerId=model,
+                hf_model_id=model,
+                task=self.task,
+                status="live",
             )
-        model_id = model if model is not None else _fetch_recommended_models().get(self.task)
+        model_id = (
+            model if model is not None else _fetch_recommended_models().get(self.task)
+        )
         if model_id is None:
             raise ValueError(
                 f"Task {self.task} has no recommended model for HF Inference. Please specify a model"
@@ -38,7 +54,11 @@ class HFInferenceTask(TaskProviderHelper):
             )
         _check_supported_task(model_id, self.task)
         return InferenceProviderMapping(
-            provider="hf-inference", providerId=model_id, hf_model_id=model_id, task=self.task, status="live"
+            provider="hf-inference",
+            providerId=model_id,
+            hf_model_id=model_id,
+            task=self.task,
+            status="live",
         )
 
     def _prepare_url(self, api_key: str, mapped_model: str) -> str:
@@ -54,18 +74,26 @@ class HFInferenceTask(TaskProviderHelper):
         )
 
     def _prepare_payload_as_dict(
-        self, inputs: Any, parameters: Dict, provider_mapping_info: InferenceProviderMapping
+        self,
+        inputs: Any,
+        parameters: Dict,
+        provider_mapping_info: InferenceProviderMapping,
     ) -> Optional[Dict]:
         if isinstance(inputs, bytes):
             raise ValueError(f"Unexpected binary input for task {self.task}.")
         if isinstance(inputs, Path):
-            raise ValueError(f"Unexpected path input for task {self.task} (got {inputs})")
+            raise ValueError(
+                f"Unexpected path input for task {self.task} (got {inputs})"
+            )
         return filter_none({"inputs": inputs, "parameters": parameters})
 
 
 class HFInferenceBinaryInputTask(HFInferenceTask):
     def _prepare_payload_as_dict(
-        self, inputs: Any, parameters: Dict, provider_mapping_info: InferenceProviderMapping
+        self,
+        inputs: Any,
+        parameters: Dict,
+        provider_mapping_info: InferenceProviderMapping,
     ) -> Optional[Dict]:
         return None
 
@@ -82,7 +110,9 @@ class HFInferenceBinaryInputTask(HFInferenceTask):
 
         # Raise if not a binary object or a local path or a URL.
         if not isinstance(inputs, (bytes, Path)) and not isinstance(inputs, str):
-            raise ValueError(f"Expected binary inputs or a local path or a URL. Got {inputs}")
+            raise ValueError(
+                f"Expected binary inputs or a local path or a URL. Got {inputs}"
+            )
 
         # Send inputs as raw content when no parameters are provided
         if not has_parameters:
@@ -91,7 +121,9 @@ class HFInferenceBinaryInputTask(HFInferenceTask):
                 return data_as_bytes
 
         # Otherwise encode as b64
-        return json.dumps({"inputs": _b64_encode(inputs), "parameters": parameters, **extra_payload}).encode("utf-8")
+        return json.dumps(
+            {"inputs": _b64_encode(inputs), "parameters": parameters, **extra_payload}
+        ).encode("utf-8")
 
 
 class HFInferenceConversational(HFInferenceTask):
@@ -99,7 +131,10 @@ class HFInferenceConversational(HFInferenceTask):
         super().__init__("conversational")
 
     def _prepare_payload_as_dict(
-        self, inputs: Any, parameters: Dict, provider_mapping_info: InferenceProviderMapping
+        self,
+        inputs: Any,
+        parameters: Dict,
+        provider_mapping_info: InferenceProviderMapping,
     ) -> Optional[Dict]:
         payload = filter_none(parameters)
         mapped_model = provider_mapping_info.provider_id
@@ -109,7 +144,10 @@ class HFInferenceConversational(HFInferenceTask):
             payload_model = "dummy"
 
         response_format = parameters.get("response_format")
-        if isinstance(response_format, dict) and response_format.get("type") == "json_schema":
+        if (
+            isinstance(response_format, dict)
+            and response_format.get("type") == "json_schema"
+        ):
             payload["response_format"] = {
                 "type": "json_object",
                 "value": response_format["json_schema"]["schema"],
@@ -149,9 +187,14 @@ def _build_chat_completion_url(model_url: str) -> str:
 
 @lru_cache(maxsize=1)
 def _fetch_recommended_models() -> Dict[str, Optional[str]]:
-    response = get_session().get(f"{constants.ENDPOINT}/api/tasks", headers=build_hf_headers())
+    response = get_session().get(
+        f"{constants.ENDPOINT}/api/tasks", headers=build_hf_headers()
+    )
     hf_raise_for_status(response)
-    return {task: next(iter(details["widgetModels"]), None) for task, details in response.json().items()}
+    return {
+        task: next(iter(details["widgetModels"]), None)
+        for task, details in response.json().items()
+    }
 
 
 @lru_cache(maxsize=None)
@@ -203,18 +246,27 @@ class HFInferenceFeatureExtractionTask(HFInferenceTask):
         super().__init__("feature-extraction")
 
     def _prepare_payload_as_dict(
-        self, inputs: Any, parameters: Dict, provider_mapping_info: InferenceProviderMapping
+        self,
+        inputs: Any,
+        parameters: Dict,
+        provider_mapping_info: InferenceProviderMapping,
     ) -> Optional[Dict]:
         if isinstance(inputs, bytes):
             raise ValueError(f"Unexpected binary input for task {self.task}.")
         if isinstance(inputs, Path):
-            raise ValueError(f"Unexpected path input for task {self.task} (got {inputs})")
+            raise ValueError(
+                f"Unexpected path input for task {self.task} (got {inputs})"
+            )
 
         # Parameters are sent at root-level for feature-extraction task
         # See specs: https://github.com/huggingface/huggingface.js/blob/main/packages/tasks/src/tasks/feature-extraction/spec/input.json
         return {"inputs": inputs, **filter_none(parameters)}
 
-    def get_response(self, response: Union[bytes, Dict], request_params: Optional[RequestParameters] = None) -> Any:
+    def get_response(
+        self,
+        response: Union[bytes, Dict],
+        request_params: Optional[RequestParameters] = None,
+    ) -> Any:
         if isinstance(response, bytes):
             return _bytes_to_dict(response)
         return response

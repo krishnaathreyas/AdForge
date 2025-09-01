@@ -25,16 +25,25 @@ class ReplicateTask(TaskProviderHelper):
         return f"/v1/models/{mapped_model}/predictions"
 
     def _prepare_payload_as_dict(
-        self, inputs: Any, parameters: Dict, provider_mapping_info: InferenceProviderMapping
+        self,
+        inputs: Any,
+        parameters: Dict,
+        provider_mapping_info: InferenceProviderMapping,
     ) -> Optional[Dict]:
         mapped_model = provider_mapping_info.provider_id
-        payload: Dict[str, Any] = {"input": {"prompt": inputs, **filter_none(parameters)}}
+        payload: Dict[str, Any] = {
+            "input": {"prompt": inputs, **filter_none(parameters)}
+        }
         if ":" in mapped_model:
             version = mapped_model.split(":", 1)[1]
             payload["version"] = version
         return payload
 
-    def get_response(self, response: Union[bytes, Dict], request_params: Optional[RequestParameters] = None) -> Any:
+    def get_response(
+        self,
+        response: Union[bytes, Dict],
+        request_params: Optional[RequestParameters] = None,
+    ) -> Any:
         response_dict = _as_dict(response)
         if response_dict.get("output") is None:
             raise TimeoutError(
@@ -42,7 +51,9 @@ class ReplicateTask(TaskProviderHelper):
                 "The model might be in cold state or starting up. Please try again later."
             )
         output_url = (
-            response_dict["output"] if isinstance(response_dict["output"], str) else response_dict["output"][0]
+            response_dict["output"]
+            if isinstance(response_dict["output"], str)
+            else response_dict["output"][0]
         )
         return get_session().get(output_url).content
 
@@ -52,11 +63,16 @@ class ReplicateTextToImageTask(ReplicateTask):
         super().__init__("text-to-image")
 
     def _prepare_payload_as_dict(
-        self, inputs: Any, parameters: Dict, provider_mapping_info: InferenceProviderMapping
+        self,
+        inputs: Any,
+        parameters: Dict,
+        provider_mapping_info: InferenceProviderMapping,
     ) -> Optional[Dict]:
         payload: Dict = super()._prepare_payload_as_dict(inputs, parameters, provider_mapping_info)  # type: ignore[assignment]
         if provider_mapping_info.adapter_weights_path is not None:
-            payload["input"]["lora_weights"] = f"https://huggingface.co/{provider_mapping_info.hf_model_id}"
+            payload["input"][
+                "lora_weights"
+            ] = f"https://huggingface.co/{provider_mapping_info.hf_model_id}"
         return payload
 
 
@@ -65,10 +81,15 @@ class ReplicateTextToSpeechTask(ReplicateTask):
         super().__init__("text-to-speech")
 
     def _prepare_payload_as_dict(
-        self, inputs: Any, parameters: Dict, provider_mapping_info: InferenceProviderMapping
+        self,
+        inputs: Any,
+        parameters: Dict,
+        provider_mapping_info: InferenceProviderMapping,
     ) -> Optional[Dict]:
         payload: Dict = super()._prepare_payload_as_dict(inputs, parameters, provider_mapping_info)  # type: ignore[assignment]
-        payload["input"]["text"] = payload["input"].pop("prompt")  # rename "prompt" to "text" for TTS
+        payload["input"]["text"] = payload["input"].pop(
+            "prompt"
+        )  # rename "prompt" to "text" for TTS
         return payload
 
 
@@ -77,11 +98,16 @@ class ReplicateImageToImageTask(ReplicateTask):
         super().__init__("image-to-image")
 
     def _prepare_payload_as_dict(
-        self, inputs: Any, parameters: Dict, provider_mapping_info: InferenceProviderMapping
+        self,
+        inputs: Any,
+        parameters: Dict,
+        provider_mapping_info: InferenceProviderMapping,
     ) -> Optional[Dict]:
         image_url = _as_url(inputs, default_mime_type="image/jpeg")
 
-        payload: Dict[str, Any] = {"input": {"input_image": image_url, **filter_none(parameters)}}
+        payload: Dict[str, Any] = {
+            "input": {"input_image": image_url, **filter_none(parameters)}
+        }
 
         mapped_model = provider_mapping_info.provider_id
         if ":" in mapped_model:

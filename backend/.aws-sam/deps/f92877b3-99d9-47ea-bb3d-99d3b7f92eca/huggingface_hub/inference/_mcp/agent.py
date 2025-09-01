@@ -3,7 +3,11 @@ from __future__ import annotations
 import asyncio
 from typing import AsyncGenerator, Dict, Iterable, List, Optional, Union
 
-from huggingface_hub import ChatCompletionInputMessage, ChatCompletionStreamOutput, MCPClient
+from huggingface_hub import (
+    ChatCompletionInputMessage,
+    ChatCompletionStreamOutput,
+    MCPClient,
+)
 
 from .._providers import PROVIDER_OR_POLICY_T
 from .constants import DEFAULT_SYSTEM_PROMPT, EXIT_LOOP_TOOLS, MAX_NUM_TURNS
@@ -47,7 +51,9 @@ class Agent(MCPClient):
         api_key: Optional[str] = None,
         prompt: Optional[str] = None,
     ):
-        super().__init__(model=model, provider=provider, base_url=base_url, api_key=api_key)
+        super().__init__(
+            model=model, provider=provider, base_url=base_url, api_key=api_key
+        )
         self._servers_cfg = list(servers)
         self.messages: List[Union[Dict, ChatCompletionInputMessage]] = [
             {"role": "system", "content": prompt or DEFAULT_SYSTEM_PROMPT}
@@ -62,7 +68,9 @@ class Agent(MCPClient):
         user_input: str,
         *,
         abort_event: Optional[asyncio.Event] = None,
-    ) -> AsyncGenerator[Union[ChatCompletionStreamOutput, ChatCompletionInputMessage], None]:
+    ) -> AsyncGenerator[
+        Union[ChatCompletionStreamOutput, ChatCompletionInputMessage], None
+    ]:
         """
         Run the agent with the given user input.
 
@@ -84,14 +92,18 @@ class Agent(MCPClient):
             async for item in self.process_single_turn_with_tools(
                 self.messages,
                 exit_loop_tools=EXIT_LOOP_TOOLS,
-                exit_if_first_chunk_no_tool=(num_turns > 0 and next_turn_should_call_tools),
+                exit_if_first_chunk_no_tool=(
+                    num_turns > 0 and next_turn_should_call_tools
+                ),
             ):
                 yield item
 
             num_turns += 1
             last = self.messages[-1]
 
-            if last.get("role") == "tool" and last.get("name") in {t.function.name for t in EXIT_LOOP_TOOLS}:
+            if last.get("role") == "tool" and last.get("name") in {
+                t.function.name for t in EXIT_LOOP_TOOLS
+            }:
                 return
 
             if last.get("role") != "tool" and num_turns > MAX_NUM_TURNS:

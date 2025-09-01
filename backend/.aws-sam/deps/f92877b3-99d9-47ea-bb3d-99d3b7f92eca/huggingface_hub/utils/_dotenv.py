@@ -3,7 +3,9 @@ import re
 from typing import Dict, Optional
 
 
-def load_dotenv(dotenv_str: str, environ: Optional[Dict[str, str]] = None) -> Dict[str, str]:
+def load_dotenv(
+    dotenv_str: str, environ: Optional[Dict[str, str]] = None
+) -> Dict[str, str]:
     """
     Parse a DOTENV-format string and return a dictionary of key-value pairs.
     Handles quoted values, comments, export keyword, and blank lines.
@@ -40,9 +42,16 @@ def load_dotenv(dotenv_str: str, environ: Optional[Dict[str, str]] = None) -> Di
                 raw_val = match.group(3) or ""
                 val = raw_val.strip()
                 # Remove surrounding quotes if quoted
-                if (val.startswith('"') and val.endswith('"')) or (val.startswith("'") and val.endswith("'")):
+                if (val.startswith('"') and val.endswith('"')) or (
+                    val.startswith("'") and val.endswith("'")
+                ):
                     val = val[1:-1]
-                    val = val.replace(r"\n", "\n").replace(r"\t", "\t").replace(r"\"", '"').replace(r"\\", "\\")
+                    val = (
+                        val.replace(r"\n", "\n")
+                        .replace(r"\t", "\t")
+                        .replace(r"\"", '"')
+                        .replace(r"\\", "\\")
+                    )
                     if raw_val.startswith('"'):
                         val = val.replace(r"\$", "$")  # only in double quotes
             elif environ is not None:

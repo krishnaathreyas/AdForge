@@ -79,7 +79,9 @@ class FalAIQueueTask(TaskProviderHelper, ABC):
         logger.info("Generating the output.. this can take several minutes.")
         while status != "COMPLETED":
             time.sleep(_POLLING_INTERVAL)
-            status_response = get_session().get(status_url, headers=request_params.headers)
+            status_response = get_session().get(
+                status_url, headers=request_params.headers
+            )
             hf_raise_for_status(status_response)
             status = status_response.json().get("status")
 
@@ -91,7 +93,10 @@ class FalAIAutomaticSpeechRecognitionTask(FalAITask):
         super().__init__("automatic-speech-recognition")
 
     def _prepare_payload_as_dict(
-        self, inputs: Any, parameters: Dict, provider_mapping_info: InferenceProviderMapping
+        self,
+        inputs: Any,
+        parameters: Dict,
+        provider_mapping_info: InferenceProviderMapping,
     ) -> Optional[Dict]:
         if isinstance(inputs, str) and inputs.startswith(("http://", "https://")):
             # If input is a URL, pass it directly
@@ -108,10 +113,16 @@ class FalAIAutomaticSpeechRecognitionTask(FalAITask):
 
         return {"audio_url": audio_url, **filter_none(parameters)}
 
-    def get_response(self, response: Union[bytes, Dict], request_params: Optional[RequestParameters] = None) -> Any:
+    def get_response(
+        self,
+        response: Union[bytes, Dict],
+        request_params: Optional[RequestParameters] = None,
+    ) -> Any:
         text = _as_dict(response)["text"]
         if not isinstance(text, str):
-            raise ValueError(f"Unexpected output format from FalAI API. Expected string, got {type(text)}.")
+            raise ValueError(
+                f"Unexpected output format from FalAI API. Expected string, got {type(text)}."
+            )
         return text
 
 
@@ -120,7 +131,10 @@ class FalAITextToImageTask(FalAITask):
         super().__init__("text-to-image")
 
     def _prepare_payload_as_dict(
-        self, inputs: Any, parameters: Dict, provider_mapping_info: InferenceProviderMapping
+        self,
+        inputs: Any,
+        parameters: Dict,
+        provider_mapping_info: InferenceProviderMapping,
     ) -> Optional[Dict]:
         payload: Dict[str, Any] = {
             "prompt": inputs,
@@ -145,7 +159,11 @@ class FalAITextToImageTask(FalAITask):
 
         return payload
 
-    def get_response(self, response: Union[bytes, Dict], request_params: Optional[RequestParameters] = None) -> Any:
+    def get_response(
+        self,
+        response: Union[bytes, Dict],
+        request_params: Optional[RequestParameters] = None,
+    ) -> Any:
         url = _as_dict(response)["images"][0]["url"]
         return get_session().get(url).content
 
@@ -155,11 +173,18 @@ class FalAITextToSpeechTask(FalAITask):
         super().__init__("text-to-speech")
 
     def _prepare_payload_as_dict(
-        self, inputs: Any, parameters: Dict, provider_mapping_info: InferenceProviderMapping
+        self,
+        inputs: Any,
+        parameters: Dict,
+        provider_mapping_info: InferenceProviderMapping,
     ) -> Optional[Dict]:
         return {"text": inputs, **filter_none(parameters)}
 
-    def get_response(self, response: Union[bytes, Dict], request_params: Optional[RequestParameters] = None) -> Any:
+    def get_response(
+        self,
+        response: Union[bytes, Dict],
+        request_params: Optional[RequestParameters] = None,
+    ) -> Any:
         url = _as_dict(response)["audio"]["url"]
         return get_session().get(url).content
 
@@ -169,7 +194,10 @@ class FalAITextToVideoTask(FalAIQueueTask):
         super().__init__("text-to-video")
 
     def _prepare_payload_as_dict(
-        self, inputs: Any, parameters: Dict, provider_mapping_info: InferenceProviderMapping
+        self,
+        inputs: Any,
+        parameters: Dict,
+        provider_mapping_info: InferenceProviderMapping,
     ) -> Optional[Dict]:
         return {"prompt": inputs, **filter_none(parameters)}
 
@@ -188,7 +216,10 @@ class FalAIImageToImageTask(FalAIQueueTask):
         super().__init__("image-to-image")
 
     def _prepare_payload_as_dict(
-        self, inputs: Any, parameters: Dict, provider_mapping_info: InferenceProviderMapping
+        self,
+        inputs: Any,
+        parameters: Dict,
+        provider_mapping_info: InferenceProviderMapping,
     ) -> Optional[Dict]:
         image_url = _as_url(inputs, default_mime_type="image/jpeg")
         payload: Dict[str, Any] = {
@@ -220,7 +251,10 @@ class FalAIImageToVideoTask(FalAIQueueTask):
         super().__init__("image-to-video")
 
     def _prepare_payload_as_dict(
-        self, inputs: Any, parameters: Dict, provider_mapping_info: InferenceProviderMapping
+        self,
+        inputs: Any,
+        parameters: Dict,
+        provider_mapping_info: InferenceProviderMapping,
     ) -> Optional[Dict]:
         image_url = _as_url(inputs, default_mime_type="image/jpeg")
         payload: Dict[str, Any] = {

@@ -232,8 +232,8 @@ def _create_default_transfer_manager(client, config, osutil):
 
 class TransferConfig(S3TransferConfig):
     ALIAS = {
-        'max_concurrency': 'max_request_concurrency',
-        'max_io_queue': 'max_io_queue_size',
+        "max_concurrency": "max_request_concurrency",
+        "max_io_queue": "max_io_queue_size",
     }
 
     def __init__(
@@ -330,13 +330,13 @@ class S3Transfer:
     def __init__(self, client=None, config=None, osutil=None, manager=None):
         if not client and not manager:
             raise ValueError(
-                'Either a boto3.Client or s3transfer.manager.TransferManager '
-                'must be provided'
+                "Either a boto3.Client or s3transfer.manager.TransferManager "
+                "must be provided"
             )
         if manager and any([client, config, osutil]):
             raise ValueError(
-                'Manager cannot be provided with client, config, '
-                'nor osutil. These parameters are mutually exclusive.'
+                "Manager cannot be provided with client, config, "
+                "nor osutil. These parameters are mutually exclusive."
             )
         if config is None:
             config = TransferConfig()
@@ -347,9 +347,7 @@ class S3Transfer:
         else:
             self._manager = create_transfer_manager(client, config, osutil)
 
-    def upload_file(
-        self, filename, bucket, key, callback=None, extra_args=None
-    ):
+    def upload_file(self, filename, bucket, key, callback=None, extra_args=None):
         """Upload a file to an S3 object.
 
         Variants have also been injected into S3 client, Bucket and Object.
@@ -362,12 +360,10 @@ class S3Transfer:
         if isinstance(filename, PathLike):
             filename = fspath(filename)
         if not isinstance(filename, str):
-            raise ValueError('Filename must be a string or a path-like object')
+            raise ValueError("Filename must be a string or a path-like object")
 
         subscribers = self._get_subscribers(callback)
-        future = self._manager.upload(
-            filename, bucket, key, extra_args, subscribers
-        )
+        future = self._manager.upload(filename, bucket, key, extra_args, subscribers)
         try:
             future.result()
         # If a client error was raised, add the backwards compatibility layer
@@ -377,13 +373,11 @@ class S3Transfer:
         except ClientError as e:
             raise S3UploadFailedError(
                 "Failed to upload {} to {}: {}".format(
-                    filename, '/'.join([bucket, key]), e
+                    filename, "/".join([bucket, key]), e
                 )
             )
 
-    def download_file(
-        self, bucket, key, filename, extra_args=None, callback=None
-    ):
+    def download_file(self, bucket, key, filename, extra_args=None, callback=None):
         """Download an S3 object to a file.
 
         Variants have also been injected into S3 client, Bucket and Object.
@@ -396,12 +390,10 @@ class S3Transfer:
         if isinstance(filename, PathLike):
             filename = fspath(filename)
         if not isinstance(filename, str):
-            raise ValueError('Filename must be a string or a path-like object')
+            raise ValueError("Filename must be a string or a path-like object")
 
         subscribers = self._get_subscribers(callback)
-        future = self._manager.download(
-            bucket, key, filename, extra_args, subscribers
-        )
+        future = self._manager.download(bucket, key, filename, extra_args, subscribers)
         try:
             future.result()
         # This is for backwards compatibility where when retries are

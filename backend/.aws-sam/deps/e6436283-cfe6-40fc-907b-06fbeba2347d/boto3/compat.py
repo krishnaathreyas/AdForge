@@ -24,12 +24,13 @@ from boto3.exceptions import PythonDeprecationWarning
 # ConnectionError
 SOCKET_ERROR = ConnectionError
 
-_APPEND_MODE_CHAR = 'a'
+_APPEND_MODE_CHAR = "a"
 
 import collections.abc as collections_abc
 
 
-if sys.platform.startswith('win'):
+if sys.platform.startswith("win"):
+
     def rename_file(current_filename, new_filename):
         try:
             os.remove(new_filename)
@@ -41,6 +42,7 @@ if sys.platform.startswith('win'):
                 # that exception.
                 raise
         os.rename(current_filename, new_filename)
+
 else:
     rename_file = os.rename
 
@@ -51,21 +53,21 @@ def filter_python_deprecation_warnings():
     at which time you will stop receiving all updates to your client.
     """
     warnings.filterwarnings(
-        'ignore',
+        "ignore",
         message=".*Boto3 will no longer support Python.*",
         category=PythonDeprecationWarning,
-        module=r".*boto3\.compat"
+        module=r".*boto3\.compat",
     )
 
 
 def _warn_deprecated_python():
     """Use this template for future deprecation campaigns as needed."""
     py_37_params = {
-        'date': 'December 13, 2023',
-        'blog_link': (
-            'https://aws.amazon.com/blogs/developer/'
-            'python-support-policy-updates-for-aws-sdks-and-tools/'
-        )
+        "date": "December 13, 2023",
+        "blog_link": (
+            "https://aws.amazon.com/blogs/developer/"
+            "python-support-policy-updates-for-aws-sdks-and-tools/"
+        ),
     }
     deprecated_versions = {
         # Example template for future deprecations
@@ -80,13 +82,13 @@ def _warn_deprecated_python():
             "starting {}. To continue receiving service updates, "
             "bug fixes, and security updates please upgrade to Python 3.8 or "
             "later. More information can be found here: {}"
-        ).format(py_version[0], py_version[1], params['date'], params['blog_link'])
+        ).format(py_version[0], py_version[1], params["date"], params["blog_link"])
         warnings.warn(warning, PythonDeprecationWarning)
 
 
 def is_append_mode(fileobj):
     return (
-        hasattr(fileobj, 'mode') and
-        isinstance(fileobj.mode, str) and
-        _APPEND_MODE_CHAR in fileobj.mode
+        hasattr(fileobj, "mode")
+        and isinstance(fileobj.mode, str)
+        and _APPEND_MODE_CHAR in fileobj.mode
     )

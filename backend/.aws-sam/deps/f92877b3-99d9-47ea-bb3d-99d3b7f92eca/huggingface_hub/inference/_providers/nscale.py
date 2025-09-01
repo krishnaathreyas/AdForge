@@ -14,13 +14,20 @@ class NscaleConversationalTask(BaseConversationalTask):
 
 class NscaleTextToImageTask(TaskProviderHelper):
     def __init__(self):
-        super().__init__(provider="nscale", base_url="https://inference.api.nscale.com", task="text-to-image")
+        super().__init__(
+            provider="nscale",
+            base_url="https://inference.api.nscale.com",
+            task="text-to-image",
+        )
 
     def _prepare_route(self, mapped_model: str, api_key: str) -> str:
         return "/v1/images/generations"
 
     def _prepare_payload_as_dict(
-        self, inputs: Any, parameters: Dict, provider_mapping_info: InferenceProviderMapping
+        self,
+        inputs: Any,
+        parameters: Dict,
+        provider_mapping_info: InferenceProviderMapping,
     ) -> Optional[Dict]:
         mapped_model = provider_mapping_info.provider_id
         # Combine all parameters except inputs and parameters
@@ -39,6 +46,10 @@ class NscaleTextToImageTask(TaskProviderHelper):
         }
         return payload
 
-    def get_response(self, response: Union[bytes, Dict], request_params: Optional[RequestParameters] = None) -> Any:
+    def get_response(
+        self,
+        response: Union[bytes, Dict],
+        request_params: Optional[RequestParameters] = None,
+    ) -> Any:
         response_dict = _as_dict(response)
         return base64.b64decode(response_dict["data"][0]["b64_json"])

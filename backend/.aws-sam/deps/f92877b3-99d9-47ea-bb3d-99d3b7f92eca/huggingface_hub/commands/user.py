@@ -58,7 +58,9 @@ except ImportError:
 class UserCommands(BaseHuggingfaceCLICommand):
     @staticmethod
     def register_subcommand(parser: _SubParsersAction):
-        login_parser = parser.add_parser("login", help="Log in using a token from huggingface.co/settings/tokens")
+        login_parser = parser.add_parser(
+            "login", help="Log in using a token from huggingface.co/settings/tokens"
+        )
         login_parser.add_argument(
             "--token",
             type=str,
@@ -70,7 +72,9 @@ class UserCommands(BaseHuggingfaceCLICommand):
             help="Optional: Save token to git credential helper.",
         )
         login_parser.set_defaults(func=lambda args: LoginCommand(args))
-        whoami_parser = parser.add_parser("whoami", help="Find out which huggingface.co account you are logged in as.")
+        whoami_parser = parser.add_parser(
+            "whoami", help="Find out which huggingface.co account you are logged in as."
+        )
         whoami_parser.set_defaults(func=lambda args: WhoamiCommand(args))
 
         logout_parser = parser.add_parser("logout", help="Log out")
@@ -81,9 +85,13 @@ class UserCommands(BaseHuggingfaceCLICommand):
         )
         logout_parser.set_defaults(func=lambda args: LogoutCommand(args))
 
-        auth_parser = parser.add_parser("auth", help="Other authentication related commands")
+        auth_parser = parser.add_parser(
+            "auth", help="Other authentication related commands"
+        )
         auth_subparsers = auth_parser.add_subparsers(help="Authentication subcommands")
-        auth_switch_parser = auth_subparsers.add_parser("switch", help="Switch between access tokens")
+        auth_switch_parser = auth_subparsers.add_parser(
+            "switch", help="Switch between access tokens"
+        )
         auth_switch_parser.add_argument(
             "--token-name",
             type=str,
@@ -95,7 +103,9 @@ class UserCommands(BaseHuggingfaceCLICommand):
             help="Optional: Save token to git credential helper.",
         )
         auth_switch_parser.set_defaults(func=lambda args: AuthSwitchCommand(args))
-        auth_list_parser = auth_subparsers.add_parser("list", help="List all stored access tokens")
+        auth_list_parser = auth_subparsers.add_parser(
+            "list", help="List all stored access tokens"
+        )
         auth_list_parser.set_defaults(func=lambda args: AuthListCommand(args))
 
 
@@ -153,7 +163,9 @@ class AuthSwitchCommand(BaseUserCommand):
             print(f"{i}. {token_name}")
         while True:
             try:
-                choice = input("Enter the number of the token to switch to (or 'q' to quit): ")
+                choice = input(
+                    "Enter the number of the token to switch to (or 'q' to quit): "
+                )
                 if choice.lower() == "q":
                     return None
                 index = int(choice) - 1

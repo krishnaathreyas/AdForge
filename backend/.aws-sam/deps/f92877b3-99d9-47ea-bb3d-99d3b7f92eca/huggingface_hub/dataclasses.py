@@ -129,7 +129,9 @@ def strict(
                 try:
                     validator(value)
                 except (ValueError, TypeError) as e:
-                    raise StrictDataclassFieldValidationError(field=name, cause=e) from e
+                    raise StrictDataclassFieldValidationError(
+                        field=name, cause=e
+                    ) from e
 
             # If validation passed, set the attribute
             original_setattr(self, name, value)
@@ -144,7 +146,9 @@ def strict(
             def __init__(self, **kwargs: Any) -> None:
                 # Extract only the fields that are part of the dataclass
                 dataclass_fields = {f.name for f in fields(cls)}  # type: ignore [arg-type]
-                standard_kwargs = {k: v for k, v in kwargs.items() if k in dataclass_fields}
+                standard_kwargs = {
+                    k: v for k, v in kwargs.items() if k in dataclass_fields
+                }
 
                 # Call the original __init__ with standard fields
                 original_init(self, **standard_kwargs)
@@ -174,7 +178,11 @@ def strict(
                 additional_repr = ", ".join(additional_kwargs)
 
                 # Combine both representations
-                return f"{standard_repr[:-1]}, {additional_repr})" if additional_kwargs else standard_repr
+                return (
+                    f"{standard_repr[:-1]}, {additional_repr})"
+                    if additional_kwargs
+                    else standard_repr
+                )
 
             cls.__repr__ = __repr__  # type: ignore [method-assign]
 
@@ -204,7 +212,9 @@ def strict(
                 try:
                     validator(self)
                 except (ValueError, TypeError) as e:
-                    raise StrictDataclassClassValidationError(validator=validator.__name__, cause=e) from e
+                    raise StrictDataclassClassValidationError(
+                        validator=validator.__name__, cause=e
+                    ) from e
 
         # Hack to be able to raise if `.validate()` already exists except if it was created by this decorator on a parent class
         # (in which case we just override it)
@@ -393,7 +403,9 @@ def _validate_tuple(name: str, value: Any, args: Tuple[Any, ...]) -> None:
                 raise TypeError(f"Invalid item at index {i} in tuple '{name}'") from e
     # Handle fixed-length tuples: Tuple[T1, T2, ...]
     elif len(args) != len(value):
-        raise TypeError(f"Field '{name}' expected a tuple of length {len(args)}, got {len(value)}")
+        raise TypeError(
+            f"Field '{name}' expected a tuple of length {len(args)}, got {len(value)}"
+        )
     else:
         for i, (item, expected) in enumerate(zip(value, args)):
             try:

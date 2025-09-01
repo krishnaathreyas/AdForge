@@ -16,7 +16,12 @@ from .errors import (
 )
 from .file_download import REGEX_COMMIT_HASH, hf_hub_download, repo_folder_name
 from .hf_api import DatasetInfo, HfApi, ModelInfo, RepoFile, SpaceInfo
-from .utils import OfflineModeIsEnabled, filter_repo_objects, logging, validate_hf_hub_args
+from .utils import (
+    OfflineModeIsEnabled,
+    filter_repo_objects,
+    logging,
+    validate_hf_hub_args,
+)
 from .utils import tqdm as hf_tqdm
 
 
@@ -143,9 +148,13 @@ def snapshot_download(
     if repo_type is None:
         repo_type = "model"
     if repo_type not in constants.REPO_TYPES:
-        raise ValueError(f"Invalid repo type: {repo_type}. Accepted repo types are: {str(constants.REPO_TYPES)}")
+        raise ValueError(
+            f"Invalid repo type: {repo_type}. Accepted repo types are: {str(constants.REPO_TYPES)}"
+        )
 
-    storage_folder = os.path.join(cache_dir, repo_folder_name(repo_id=repo_id, repo_type=repo_type))
+    storage_folder = os.path.join(
+        cache_dir, repo_folder_name(repo_id=repo_id, repo_type=repo_type)
+    )
 
     api = HfApi(
         library_name=library_name,
@@ -162,7 +171,9 @@ def snapshot_download(
         # try/except logic to handle different errors => taken from `hf_hub_download`
         try:
             # if we have internet connection we want to list files to download
-            repo_info = api.repo_info(repo_id=repo_id, repo_type=repo_type, revision=revision)
+            repo_info = api.repo_info(
+                repo_id=repo_id, repo_type=repo_type, revision=revision
+            )
         except (requests.exceptions.SSLError, requests.exceptions.ProxyError):
             # Actually raise for those subclasses of ConnectionError
             raise
@@ -239,7 +250,8 @@ def snapshot_download(
                 "'HF_HUB_OFFLINE=0' as environment variable."
             ) from api_call_error
         elif isinstance(api_call_error, (RepositoryNotFoundError, GatedRepoError)) or (
-            isinstance(api_call_error, HfHubHTTPError) and api_call_error.response.status_code == 401
+            isinstance(api_call_error, HfHubHTTPError)
+            and api_call_error.response.status_code == 401
         ):
             # Repo not found, gated, or specific authentication error => let's raise the actual error
             raise api_call_error
@@ -253,11 +265,17 @@ def snapshot_download(
 
     # At this stage, internet connection is up and running
     # => let's download the files!
-    assert repo_info.sha is not None, "Repo info returned from server must have a revision sha."
+    assert (
+        repo_info.sha is not None
+    ), "Repo info returned from server must have a revision sha."
 
     # Corner case: on very large repos, the siblings list in `repo_info` might not contain all files.
     # In that case, we need to use the `list_repo_tree` method to prevent caching issues.
-    repo_files: Iterable[str] = [f.rfilename for f in repo_info.siblings] if repo_info.siblings is not None else []
+    repo_files: Iterable[str] = (
+        [f.rfilename for f in repo_info.siblings]
+        if repo_info.siblings is not None
+        else []
+    )
     unreliable_nb_files = (
         repo_info.siblings is None
         or len(repo_info.siblings) == 0
@@ -269,7 +287,9 @@ def snapshot_download(
         )
         repo_files = (
             f.rfilename
-            for f in api.list_repo_tree(repo_id=repo_id, recursive=True, revision=revision, repo_type=repo_type)
+            for f in api.list_repo_tree(
+                repo_id=repo_id, recursive=True, revision=revision, repo_type=repo_type
+            )
             if isinstance(f, RepoFile)
         )
 
@@ -297,7 +317,9 @@ def snapshot_download(
             with open(ref_path, "w") as f:
                 f.write(commit_hash)
         except OSError as e:
-            logger.warning(f"Ignored error while writing commit hash to {ref_path}: {e}.")
+            logger.warning(
+                f"Ignored error while writing commit hash to {ref_path}: {e}."
+            )
 
     # we pass the commit_hash to hf_hub_download
     # so no network call happens if we already

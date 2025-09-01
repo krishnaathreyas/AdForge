@@ -23,7 +23,11 @@ class NovitaTextGenerationTask(BaseTextGenerationTask):
         # there is no v1/ route for novita
         return "/v3/openai/completions"
 
-    def get_response(self, response: Union[bytes, Dict], request_params: Optional[RequestParameters] = None) -> Any:
+    def get_response(
+        self,
+        response: Union[bytes, Dict],
+        request_params: Optional[RequestParameters] = None,
+    ) -> Any:
         output = _as_dict(response)["choices"][0]
         return {
             "generated_text": output["text"],
@@ -51,11 +55,18 @@ class NovitaTextToVideoTask(TaskProviderHelper):
         return f"/v3/hf/{mapped_model}"
 
     def _prepare_payload_as_dict(
-        self, inputs: Any, parameters: Dict, provider_mapping_info: InferenceProviderMapping
+        self,
+        inputs: Any,
+        parameters: Dict,
+        provider_mapping_info: InferenceProviderMapping,
     ) -> Optional[Dict]:
         return {"prompt": inputs, **filter_none(parameters)}
 
-    def get_response(self, response: Union[bytes, Dict], request_params: Optional[RequestParameters] = None) -> Any:
+    def get_response(
+        self,
+        response: Union[bytes, Dict],
+        request_params: Optional[RequestParameters] = None,
+    ) -> Any:
         response_dict = _as_dict(response)
         if not (
             isinstance(response_dict, dict)
@@ -63,7 +74,9 @@ class NovitaTextToVideoTask(TaskProviderHelper):
             and isinstance(response_dict["video"], dict)
             and "video_url" in response_dict["video"]
         ):
-            raise ValueError("Expected response format: { 'video': { 'video_url': string } }")
+            raise ValueError(
+                "Expected response format: { 'video': { 'video_url': string } }"
+            )
 
         video_url = response_dict["video"]["video_url"]
         return get_session().get(video_url).content
