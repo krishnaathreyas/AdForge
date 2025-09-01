@@ -2,7 +2,7 @@
 
 This directory contains the complete source code and infrastructure-as-code definitions for the Samsung Ad-Forge serverless backend.
 
-**Team Name:** `[Your Team Name]`
+**Team Name:** Temperature=0.0
 
 ---
 ## 1. Architecture Overview
@@ -54,4 +54,32 @@ sam build
 
 # Deploy the stack to the cloud, following the guided prompts
 sam deploy --guided
+```
+
+## 5. API Contract
+The deployed service exposes two endpoints:
+##### Endpoint 1: Start Ad Generation
+* Path: /forge
+* Method: POST
+* Request Body:
+```JSON
+  {
+  "sku": "PROD-S24ULTRA",
+  "user_context": "An ad for the Cricket World Cup, targeting fans in Mumbai"
+}
+ ```
+* Success Response (202 Accepted):
+ ```JSON
+{
+  "jobId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+  "status": "PROCESSING"
+}
+```
+##### Endpoint 2: Check Job Status
+* Path: /status/{jobId}
+* Method: GET
+* Success Response (200 OK)
+* While processing: {"status": "PENDING", ...}
+* On completion: {"status": "COMPLETE", "finalVideoUrl": "https://...", ...}
+* On failure: {"status": "FAILED", "errorMessage": "...", ...}
 
