@@ -1,5 +1,10 @@
+import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:gal/gal.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:video_player/video_player.dart';
 import '../providers/app_provider.dart';
 
@@ -13,6 +18,10 @@ class ResultsScreen extends StatefulWidget {
 class _ResultsScreenState extends State<ResultsScreen> {
   VideoPlayerController? _controller;
   Future<void>? _initializeVideoPlayerFuture;
+
+  // New state variables for loading indicators
+  bool _isDownloading = false;
+  bool _isSharing = false;
 
   @override
   void didChangeDependencies() {
@@ -36,6 +45,108 @@ class _ResultsScreenState extends State<ResultsScreen> {
   void dispose() {
     _controller?.dispose();
     super.dispose();
+  }
+
+  // --- UPDATED DOWNLOAD HELPER ---
+  Future<File?> _downloadVideo(String url) async {
+    print("🔄 Starting video download from: $url");
+    try {
+      final dio = Dio();
+      final tempDir = await getTemporaryDirectory();
+      final tempPath = '${tempDir.path}/ad_forge_video.mp4';
+
+      // We removed the onReceiveProgress callback for a cleaner log
+      await dio.download(url, tempPath);
+
+      final file = File(tempPath);
+      if (await file.exists() && await file.length() > 0) {
+        print("✅ Download completed successfully to: $tempPath");
+        return file;
+      } else {
+        throw Exception('Downloaded file is empty or does not exist.');
+      }
+    } catch (e) {
+      print("❌ Error during video download: $e");
+      return null;
+    }
+  }
+
+  // --- UPDATED DOWNLOAD HANDLER ---
+  Future<void> _handleDownloadAd() async {
+    final provider = context.read<AppProvider>();
+    if (provider.generatedVideoUrl == null) return;
+
+    setState(() => _isDownloading = true);
+
+    try {
+      final hasAccess = await Gal.hasAccess();
+      if (!hasAccess) await Gal.requestAccess();
+
+      final videoFile = await _downloadVideo(provider.generatedVideoUrl!);
+
+      if (videoFile != null) {
+        await Gal.putVideo(videoFile.path, album: 'Ad-Forge');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Video saved to gallery!'),
+                backgroundColor: Colors.green),
+          );
+        }
+        await videoFile.delete(); // Clean up
+      } else {
+        throw Exception('Download failed, file not available.');
+      }
+    } catch (e) {
+      print("❌ Error saving to gallery: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Failed to save video.'),
+              backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      // This 'finally' block GUARANTEES the spinner stops
+      if (mounted) {
+        setState(() => _isDownloading = false);
+      }
+    }
+  }
+
+  // --- UPDATED SHARE HANDLER ---
+  Future<void> _handleShareAd() async {
+    final provider = context.read<AppProvider>();
+    if (provider.generatedVideoUrl == null) return;
+
+    setState(() => _isSharing = true);
+
+    try {
+      final videoFile = await _downloadVideo(provider.generatedVideoUrl!);
+      if (videoFile != null) {
+        await Share.shareXFiles(
+          [XFile(videoFile.path)],
+          text: 'Check out this ad I made with Ad-Forge!',
+        );
+        await videoFile.delete(); // Clean up
+      } else {
+        throw Exception('Download failed, file not available for sharing.');
+      }
+    } catch (e) {
+      print("❌ Error preparing for share: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Failed to prepare video for sharing.'),
+              backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      // This 'finally' block GUARANTEES the spinner stops
+      if (mounted) {
+        setState(() => _isSharing = false);
+      }
+    }
   }
 
   @override
@@ -242,9 +353,16 @@ class _ResultsScreenState extends State<ResultsScreen> {
           children: [
             Expanded(
               child: ElevatedButton.icon(
-                onPressed: () {/* TODO: Handle save functionality */},
-                icon: const Icon(Icons.download, color: Colors.white),
-                label: const Text('Save Ad',
+                onPressed: _isDownloading ? null : _handleDownloadAd,
+                icon: _isDownloading
+                    ? Container(
+                        width: 24,
+                        height: 24,
+                        padding: const EdgeInsets.all(2.0),
+                        child: const CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 3))
+                    : const Icon(Icons.download, color: Colors.white),
+                label: const Text('Download Ad',
                     style: TextStyle(color: Colors.white)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF6366F1),
@@ -257,8 +375,15 @@ class _ResultsScreenState extends State<ResultsScreen> {
             const SizedBox(width: 15),
             Expanded(
               child: OutlinedButton.icon(
-                onPressed: () {/* TODO: Handle share functionality */},
-                icon: const Icon(Icons.share, color: Colors.white),
+                onPressed: _isSharing ? null : _handleShareAd,
+                icon: _isSharing
+                    ? Container(
+                        width: 24,
+                        height: 24,
+                        padding: const EdgeInsets.all(2.0),
+                        child: const CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 3))
+                    : const Icon(Icons.share, color: Colors.white),
                 label: const Text('Share Ad',
                     style: TextStyle(color: Colors.white)),
                 style: OutlinedButton.styleFrom(

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/product.dart';
 import '../services/api_service.dart';
+import 'dart:io';
 
 class AppProvider with ChangeNotifier {
   // Navigation State
@@ -22,12 +23,17 @@ class AppProvider with ChangeNotifier {
   String _generationStatus = '';
   String get generationStatus => _generationStatus;
 
+  File? _storeImage;
+  File? get storeImage => _storeImage;
+  String? _selectedCity;
+  String? get selectedCity => _selectedCity;
+
   String? _error;
   String? get error => _error;
 
   Timer? _pollingTimer;
 
-  List<ActivityItem> _recentActivities = [];
+  final List<ActivityItem> _recentActivities = [];
   List<ActivityItem> get recentActivities => _recentActivities;
 
   @override
@@ -42,6 +48,17 @@ class AppProvider with ChangeNotifier {
     pageController.animateToPage(index,
         duration: const Duration(milliseconds: 200), curve: Curves.easeIn);
     notifyListeners();
+  }
+
+  // THIS IS A TEMPORARY METHOD FOR TESTING THE RESULTS SCREEN
+  void loadSampleVideoForTesting() {
+    _scannedProduct = Product.sampleProducts.first;
+    _generatedVideoUrl =
+        'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+    _isGenerating = false;
+    _generationStatus = "Complete!";
+    notifyListeners();
+    goToTab(3); // Navigate to the Results screen
   }
 
   void setPageIndex(int index) {
@@ -67,6 +84,18 @@ class AppProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // --- NEW: Methods for your new features ---
+  void setStoreImage(File? image) {
+    _storeImage = image;
+    notifyListeners();
+  }
+
+  void setSelectedCity(String? city) {
+    _selectedCity = city;
+    notifyListeners();
+  }
+  // --------------------------------------------
+
   Future<bool> startVideoGeneration() async {
     if (_scannedProduct == null) return false;
     _isGenerating = true;
@@ -74,6 +103,8 @@ class AppProvider with ChangeNotifier {
     _generationStatus = "Kicking off the ad-forge engine...";
     notifyListeners();
 
+    // NOTE: Your ApiService.startVideoGenerationJob method will also need to be
+    // updated to accept and send the _storeImage and _selectedCity to your backend.
     final jobId = await ApiService.startVideoGenerationJob(
         product: _scannedProduct!, context: _marketingContext);
 
@@ -135,6 +166,7 @@ class AppProvider with ChangeNotifier {
     });
   }
 
+  // Updated to reset the new feature states
   void resetFlow() {
     _pollingTimer?.cancel();
     _scannedProduct = null;
@@ -142,6 +174,9 @@ class AppProvider with ChangeNotifier {
     _generatedVideoUrl = null;
     _isGenerating = false;
     _generationStatus = '';
+    _error = null;
+    _storeImage = null;
+    _selectedCity = null;
     goToTab(0);
     notifyListeners();
   }

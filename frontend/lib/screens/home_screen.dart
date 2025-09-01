@@ -29,8 +29,6 @@ class HomeScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Your illustration card can go here
-              // For now, a placeholder:
               Container(
                 height: 180,
                 width: double.infinity,
@@ -38,7 +36,7 @@ class HomeScreen extends StatelessWidget {
                   // This makes your image have the same rounded corners
                   borderRadius: BorderRadius.circular(20),
                   child: Image.asset(
-                    'assets/stock1.png', // <-- IMPORTANT: Make sure the extension (.png, .jpg, etc.) is correct
+                    'assets/stock1.png',
                     fit: BoxFit
                         .cover, // This makes the image fill the space nicely
                   ),

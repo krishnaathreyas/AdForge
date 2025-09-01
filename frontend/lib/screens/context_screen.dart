@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
-import '../models/product.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 
 class ContextScreen extends StatefulWidget {
   const ContextScreen({super.key});
@@ -12,7 +13,9 @@ class ContextScreen extends StatefulWidget {
 
 class _ContextScreenState extends State<ContextScreen> {
   final TextEditingController _contextController = TextEditingController();
+  final ImagePicker _picker = ImagePicker();
 
+  // CRITICAL: Keep this loading state from original
   bool _isButtonLoading = false;
 
   final List<String> _suggestions = [
@@ -38,6 +41,27 @@ class _ContextScreenState extends State<ContextScreen> {
     super.dispose();
   }
 
+  // NEW FEATURE: Image picker functionality
+  Future<void> _pickImage() async {
+    final provider = context.read<AppProvider>();
+    try {
+      final XFile? pickedFile =
+          await _picker.pickImage(source: ImageSource.gallery);
+      if (pickedFile != null) {
+        provider.setStoreImage(File(pickedFile.path));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Could not pick image.'),
+              backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  // CRITICAL: Keep this error dialog from original
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
@@ -68,7 +92,7 @@ class _ContextScreenState extends State<ContextScreen> {
     );
   }
 
-  // This is the updated method with full error handling
+  // CRITICAL: Keep this proper async error handling from original
   Future<void> _handleGenerateAd() async {
     FocusScope.of(context).unfocus();
 
@@ -125,6 +149,7 @@ class _ContextScreenState extends State<ContextScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Original product display
               Container(
                 width: double.infinity,
                 margin: const EdgeInsets.only(bottom: 25),
@@ -167,6 +192,8 @@ class _ContextScreenState extends State<ContextScreen> {
                   ],
                 ),
               ),
+
+              // Original context input
               Text(
                 'Tell us about your local marketing needs:',
                 style: TextStyle(fontSize: 16, color: Colors.grey.shade400),
@@ -193,6 +220,48 @@ class _ContextScreenState extends State<ContextScreen> {
                   ),
                 ),
               ),
+
+              // NEW FEATURE 1: Image Upload
+              const SizedBox(height: 30),
+              const Text(
+                'Store Image (Optional):',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 15),
+              GestureDetector(
+                onTap: _pickImage,
+                child: Container(
+                  height: 150,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1F1F3A),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFF2A2A4E)),
+                  ),
+                  child: provider.storeImage != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.file(provider.storeImage!,
+                              fit: BoxFit.cover),
+                        )
+                      : Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.add_a_photo_outlined,
+                                color: Colors.grey.shade400, size: 40),
+                            const SizedBox(height: 8),
+                            Text('Tap to upload store image',
+                                style: TextStyle(color: Colors.grey.shade400)),
+                          ],
+                        ),
+                ),
+              ),
+
+              // Original suggestions
               const SizedBox(height: 30),
               const Text(
                 'Quick Suggestions:',
@@ -216,19 +285,19 @@ class _ContextScreenState extends State<ContextScreen> {
                   );
                 }).toList(),
               ),
+
+              // CRITICAL: Keep original button with proper error handling
               const SizedBox(height: 40),
               SizedBox(
                 width: double.infinity,
                 height: 60,
                 child: ElevatedButton(
+                  // IMPORTANT: Call the proper async method, not direct provider calls
                   onPressed: _contextController.text.trim().isEmpty ||
+                          _isButtonLoading ||
                           provider.isGenerating
                       ? null
-                      : () {
-                          provider.setMarketingContext(
-                              _contextController.text.trim());
-                          provider.startVideoGeneration();
-                        },
+                      : _handleGenerateAd, // This handles errors properly
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF6366F1),
                     disabledBackgroundColor: Colors.grey.shade800,
@@ -236,7 +305,7 @@ class _ContextScreenState extends State<ContextScreen> {
                       borderRadius: BorderRadius.circular(15),
                     ),
                   ),
-                  child: provider.isGenerating
+                  child: _isButtonLoading || provider.isGenerating
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text(
                           'Generate Ad',
