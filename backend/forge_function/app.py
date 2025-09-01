@@ -13,9 +13,23 @@ JOBS_TABLE_NAME = os.environ.get('JOBS_TABLE_NAME')
 WORKER_FUNCTION_NAME = os.environ.get('WORKER_FUNCTION_NAME')
 
 def lambda_handler(event, context):
+    
     """
-    Receives a request, creates a job in DynamoDB, and asynchronously
-    invokes the worker Lambda.
+    Acts as the main API endpoint to start an ad generation job.
+
+    This function is designed to be fast (< 2 seconds). It validates the
+    incoming request, creates a new job entry in DynamoDB with a 'PENDING'
+    status, and asynchronously invokes the long-running WorkerFunction
+    to handle the actual AI pipeline.
+
+    Args:
+        event (dict): API Gateway Lambda Proxy Input Format.
+                      The request body is expected to contain 'sku' and 'user_context'.
+        context (object): Lambda Context runtime methods and attributes.
+
+    Returns:
+        dict: An API Gateway Lambda Proxy Output Format object with a 202
+              status code and the unique jobId for the client to poll.
     """
     try:
         print("ForgeFunction started...")

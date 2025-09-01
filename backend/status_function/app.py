@@ -3,9 +3,13 @@ import os
 import boto3
 from decimal import Decimal
 
-# --- START OF FIX ---
+
 # Custom JSON encoder to handle DynamoDB's Decimal type
 class DecimalEncoder(json.JSONEncoder):
+    """
+    Custom JSON encoder to handle the Decimal type returned by DynamoDB,
+    which is not serializable by the default json library.
+    """
     def default(self, obj):
         if isinstance(obj, Decimal):
             # Convert Decimal to int if it's a whole number, otherwise to float
@@ -15,7 +19,7 @@ class DecimalEncoder(json.JSONEncoder):
                 return float(obj)
         # Let the base class default method raise the TypeError
         return super(DecimalEncoder, self).default(obj)
-# --- END OF FIX ---
+
 
 # Initialize AWS clients
 dynamodb = boto3.resource('dynamodb')
@@ -23,8 +27,19 @@ JOBS_TABLE_NAME = os.environ.get('JOBS_TABLE_NAME')
 
 def lambda_handler(event, context):
     """
-    Retrieves the status of a job from DynamoDB using the jobId
-    from the URL path.
+    Retrieves the status and result of a specific ad generation job from DynamoDB.
+
+    This function is called by the client in a polling loop. It fetches the
+    job item using the 'jobId' provided in the URL path.
+
+    Args:
+        event (dict): API Gateway Lambda Proxy Input Format.
+                      'pathParameters' is expected to contain the 'jobId'.
+        context (object): Lambda Context runtime methods and attributes.
+
+    Returns:
+        dict: An API Gateway Lambda Proxy Output Format object containing the
+              full job item from DynamoDB (e.g., status, finalVideoUrl).
     """
     try:
         print("StatusFunction started...")
