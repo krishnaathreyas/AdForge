@@ -8,7 +8,8 @@ This is the official Flutter application for the Ad-Forge project, built for the
 
 | Home Screen | Scanner Screen | Context Screen | Results Screen |
 | :---: | :---: | :---: | :---: |
-| *(Your Home Screenshot Here)* | *(Your Scanner Screenshot Here)* | *(Your Context Screenshot Here)* | *(Your Results Screenshot Here)* |
+| <img width="406" height="819" alt="Home Screen" src="https://github.com/user-attachments/assets/1108918c-4f0b-41eb-a332-3a581a601d97" /> | <img width="400" height="830" alt="Scanner Screen" src="https://github.com/user-attachments/assets/99f43805-fcb1-4d13-a6df-e80decbea424" /> | <img width="397" height="841" alt="Context Screen" src="https://github.com/user-attachments/assets/af415503-0f6d-42bb-8ab2-62574b5f599a" /> | <img width="418" height="837" alt="Result Screen" src="https://github.com/user-attachments/assets/59e26aa5-86d4-428a-815c-82f0dd54daef" /> |
+
 
 
 ---
