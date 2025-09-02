@@ -50,17 +50,6 @@ class AppProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // THIS IS A TEMPORARY METHOD FOR TESTING THE RESULTS SCREEN
-  void loadSampleVideoForTesting() {
-    _scannedProduct = Product.sampleProducts.first;
-    _generatedVideoUrl =
-        'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
-    _isGenerating = false;
-    _generationStatus = "Complete!";
-    notifyListeners();
-    goToTab(3); // Navigate to the Results screen
-  }
-
   void setPageIndex(int index) {
     _selectedIndex = index;
     notifyListeners();
