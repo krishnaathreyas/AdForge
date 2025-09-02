@@ -55,11 +55,11 @@ def generate_ad_blueprint(product_data, user_context, api_key):
 
     # --- START OF CHANGE ---
     prompt = f"""
-    You are an expert creative director for a Samsung ad. The total ad length will be 20 seconds, with the final 2 seconds being a silent branding outro.
+    You are an expert creative director for a Samsung ad. The total ad length will be 26 seconds, with the final 2 seconds being a silent branding outro.
     Your task is to generate a complete creative blueprint as a single, valid JSON object.
     The blueprint must have three keys:
     1. "acts": An array of 3 vivid, visual prompts for a text-to-video AI model.
-    2. "voiceover_script": A cohesive voiceover script, timed to last approximately 15 seconds.
+    2. "voiceover_script": A cohesive voiceover script, that is timed to last approximately 22-23 seconds, ensuring it ends naturally before the final branding shot.
     3. "voice_id": Based on the user's context, select the SINGLE MOST appropriate voice for the ad's tone from the 'Available Voice IDs' and return its corresponding unique ID string (the value).
 
     Product Name: {product_data.get('productName')}
@@ -189,7 +189,7 @@ def generate_final_video(clips, voiceover_url, music_url, api_key):
             {
                 "asset": {"type": "audio", "src": voiceover_url, "volume": 1},
                 "start": 0,
-                "length": total_video_length,
+                "length": total_video_length - 2,
             }
         ]
     }
@@ -287,9 +287,14 @@ def lambda_handler(event, context):
         video_clip_bytes = [None] * 3
 
         for i, act in enumerate(ad_blueprint["acts"]):
+            if isinstance(act, dict):
+                prompt = act.get('prompt', '')
+            else:
+                prompt = str(act)
+
             thread = Thread(
                 target=generate_video_clip,
-                args=(act["prompt"], hf_client_video, video_clip_bytes, i),
+                args=(prompt, hf_client_video, video_clip_bytes, i),
             )
             threads.append(thread)
             thread.start()
@@ -327,14 +332,11 @@ def lambda_handler(event, context):
 
         # -- 5. ASSEMBLE THE FINAL VIDEO --
         print("Assembling final video with Shotstack...")
-        s3_uri = product_data["product_shot_url"]
-        template_bucket = s3_uri.split("/")[2]
-        template_key = "/".join(s3_uri.split("/")[3:])
-        product_shot_url = s3.generate_presigned_url(
-            "get_object",
-            Params={"Bucket": template_bucket, "Key": template_key},
-            ExpiresIn=600,
-        )
+        product_shot_urls=[]
+        for s3_uri in product_data['product_shot_url']:
+            bucket = s3_uri.split('/')[2]
+            key = '/'.join(s3_uri.split('/')[3:])
+            product_shot_urls.append(s3.generate_presigned_url('get_object', Params={'Bucket': bucket, 'Key': key}, ExpiresIn=600))
 
         samsung_logo_key = (
             "curated_clips/samsung_name.mp4"  # Assuming it's in this folder
@@ -360,23 +362,28 @@ def lambda_handler(event, context):
                 "length": 5,
             },
             {
-                "asset": {"type": "video", "src": product_shot_url, "volume": 0},
+                "asset": {"type": "video", "src": product_shot_urls[0], "volume": 0},
                 "start": 5,
-                "length": 3,
+                "length": 4,
             },
             {
                 "asset": {"type": "video", "src": video_clip_urls[1]},
-                "start": 8,
+                "start": 9,
+                "length": 5,
+            },
+            {
+                "asset": {"type": "video", "src": product_shot_urls[1], "volume": 0},
+                "start": 14,
                 "length": 5,
             },
             {
                 "asset": {"type": "video", "src": video_clip_urls[2]},
-                "start": 13,
+                "start": 19,
                 "length": 5,
             },
             {
                 "asset": {"type": "video", "src": samsung_logo_url},
-                "start": 18,
+                "start": 24,
                 "length": 2,
             },
         ]

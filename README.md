@@ -20,7 +20,7 @@ Samsung Ad-Forge is a B2B generative AI platform that empowers Samsung's vast ne
 
 ## 3. System Architecture
 
-![Ad-Forge System Architecture](assets/architecture.png)
+![Ad-Forge System Architecture](/frontend/assets/architecture.png)
 
 Our system is built on a modern, asynchronous, serverless architecture using AWS. The workflow is orchestrated by three distinct microservices:
 
