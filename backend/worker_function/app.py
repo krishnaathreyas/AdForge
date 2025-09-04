@@ -48,19 +48,27 @@ def generate_ad_blueprint(product_data, user_context, api_key):
 
     # This is your curated library of voice actors using the IDs you provided.
     voice_options = {
-        "professional_male_voice_1": "vO7hjeAjmsdlGgUdvPpe",
+        "professional_male_voice_1": "wlmwDR77ptH6bKHZui0l",
         "professional_female_voice_1": "wlmwDR77ptH6bKHZui0l",
-        "professional_female_voice_2": "2zRM7PkgwBPiau2jvVXc",
+        "professional_female_voice_2": "2zRM7PkgwBPiau2jvVXc", 
     }
 
     # --- START OF CHANGE ---
     prompt = f"""
-    You are an expert creative director for a Samsung ad. The total ad length will be 26 seconds, with the final 2 seconds being a silent branding outro.
+    You are an expert but cautious creative director for a Samsung ad. The total ad length will be 26 seconds, with the final 2 seconds being a silent branding outro.
+    Your primary goal is to generate a blueprint with visual prompts that are safe and will not be flagged by downstream AI content filters.
+
     Your task is to generate a complete creative blueprint as a single, valid JSON object.
     The blueprint must have three keys:
-    1. "acts": An array of 3 vivid, visual prompts for a text-to-video AI model.
+    1. "acts": An array of 3 vivid, visual prompts for a text-to-video AI model. 
+       ## IMPORTANT CONSTRAINT ##
+       These prompts must be carefully written to avoid content policy violations. 
+       - Use neutral, descriptive language.
+       - AVOID words related to impact, drama, or conflict (e.g., "shot", "dramatic", "tension", "hit").
+       - INSTEAD, use safer synonyms (e.g., "a view of", "a scene showing", "an exciting moment", "connecting with the ball").
+       - Focus on the product, scenery, and positive emotions.
     2. "voiceover_script": A cohesive voiceover script, that is timed to last approximately 22-23 seconds, ensuring it ends naturally before the final branding shot.
-    3. "voice_id": Based on the user's context, select the SINGLE MOST appropriate voice for the ad's tone from the 'Available Voice IDs' and return its corresponding unique ID string (the value).
+    3. "voice_id": Based on the user's context, select the SINGLE MOST appropriate voice for the ad's tone from the 'Available Voice IDs' and return its corresponding unique ID string (the value), not its descriptive name (the key).
 
     Product Name: {product_data.get('productName')}
     User Context: {user_context}
@@ -142,7 +150,7 @@ def generate_voiceover(script, voice_id, api_key, bucket_name):
     return audio_url
 
 
-def generate_video_clip(prompt, hf_client, results_list, index):
+def generate_video_clip(prompt, hf_client_video, results_list, index):
     """
     Generates a single video clip using the Hugging Face client for Fal.ai.
 
@@ -154,13 +162,20 @@ def generate_video_clip(prompt, hf_client, results_list, index):
     """
     print(f"Starting video generation for prompt {index+1}...")
     try:
-        video_bytes = hf_client.text_to_video(
+        video_bytes = hf_client_video.text_to_video(
             prompt,
             model="Wan-AI/Wan2.2-T2V-A14B",
         )
         print(f"Finished video generation for prompt {index+1}.")
         results_list[index] = video_bytes
     except Exception as e:
+        # --- THIS IS THE NEW DEBUGGING LOGIC ---
+        print(f"--- DETAILED ERROR CAUGHT for clip {index+1} ---")
+        print(f"PROMPT: {prompt}")
+        print(f"EXCEPTION TYPE: {type(e).__name__}")
+        print(f"FULL ERROR: {e}")
+        print(f"-------------------------------------------")
+        results_list[index] = None
         print(f"Error generating clip {index+1}: {e}")
         results_list[index] = None
 
@@ -279,7 +294,7 @@ def lambda_handler(event, context):
         print("Generating ad blueprint...")
         hf_client = InferenceClient(token=openrouter_key)
         ad_blueprint = generate_ad_blueprint(product_data, user_context, openrouter_key)
-        hf_client_video = InferenceClient(provider="fal-ai", token=hf_token)
+        hf_client_video = InferenceClient(provider="replicate", token=hf_token, timeout=120)
 
         # -- 3. GENERATE ALL ASSETS IN PARALLEL --
         print("Generating voiceover and video clips in parallel...")
