@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:video_player/video_player.dart';
 import '../providers/app_provider.dart';
+import '../widgets/loading_animation.dart';
 
 class ResultsScreen extends StatefulWidget {
   const ResultsScreen({super.key});
@@ -208,9 +209,15 @@ class _ResultsScreenState extends State<ResultsScreen> {
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        SizedBox(height: MediaQuery.of(context).size.height * 0.2),
-        const CircularProgressIndicator(),
-        const SizedBox(height: 30),
+        SizedBox(height: MediaQuery.of(context).size.height * 0.15),
+
+        // Option 1: Interactive circular loading with progress bar (recommended)
+        InteractiveLoadingWidget(progress: 0.5),
+
+        // Option 2: Flying character with progress bar (comment out the one above and uncomment this)
+        // FlyingCharacterWidget(progress: provider.generationProgress),
+
+        const SizedBox(height: 40),
         const Text(
           "Forging your masterpiece...",
           style: TextStyle(
@@ -225,7 +232,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
         ),
         const SizedBox(height: 15),
         Text(
-          "This may take a few minutes. Please keep the app open.",
+          "This may take a few moments. Please keep the app open.",
           style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
           textAlign: TextAlign.center,
         ),

@@ -18,6 +18,9 @@ class _ContextScreenState extends State<ContextScreen> {
   // CRITICAL: Keep this loading state from original
   bool _isButtonLoading = false;
 
+  // NEW: Language dropdown state
+  String? _selectedLanguage;
+
   final List<String> _suggestions = [
     'Student Discounts',
     'Eco-Friendly Features',
@@ -27,6 +30,16 @@ class _ContextScreenState extends State<ContextScreen> {
     'New Product Launch',
     'Local Community Event',
     'Trade-in Offer',
+  ];
+
+  // NEW: Language options
+  final List<Map<String, String>> _languageOptions = [
+    {'value': 'english', 'label': 'English'},
+    {'value': 'delhi-hindi', 'label': 'Delhi-Hindi'},
+    {'value': 'bengaluru-kannada', 'label': 'Bengaluru-Kannada'},
+    {'value': 'mumbai-marathi', 'label': 'Mumbai-Marathi'},
+    {'value': 'chennai-tamil', 'label': 'Chennai-Tamil'},
+    {'value': 'hyderabad-telugu', 'label': 'Hyderabad-Telugu'},
   ];
 
   @override
@@ -193,7 +206,64 @@ class _ContextScreenState extends State<ContextScreen> {
                 ),
               ),
 
+              // NEW: Language Selection Dropdown
+              const Text(
+                'Language:',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 15),
+              Container(
+                width: double.infinity,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1F1F3A),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFF2A2A4E)),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _selectedLanguage,
+                    hint: Text(
+                      'Language',
+                      style: TextStyle(
+                        color: Colors.grey.shade400,
+                        fontSize: 16,
+                      ),
+                    ),
+                    icon: Icon(
+                      Icons.keyboard_arrow_down,
+                      color: Colors.grey.shade400,
+                    ),
+                    dropdownColor: const Color(0xFF1F1F3A),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                    ),
+                    items: _languageOptions.map((language) {
+                      return DropdownMenuItem<String>(
+                        value: language['value'],
+                        child: Text(
+                          language['label']!,
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        _selectedLanguage = newValue;
+                      });
+                    },
+                  ),
+                ),
+              ),
+
               // Original context input
+              const SizedBox(height: 30),
               Text(
                 'Tell us about your local marketing needs:',
                 style: TextStyle(fontSize: 16, color: Colors.grey.shade400),
@@ -221,7 +291,7 @@ class _ContextScreenState extends State<ContextScreen> {
                 ),
               ),
 
-              // NEW FEATURE 1: Image Upload
+              // Store Image Upload (existing feature)
               const SizedBox(height: 30),
               const Text(
                 'Store Image (Optional):',

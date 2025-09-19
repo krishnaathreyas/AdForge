@@ -28,6 +28,10 @@ class AppProvider with ChangeNotifier {
   String? _selectedCity;
   String? get selectedCity => _selectedCity;
 
+  // NEW: Language state
+  String? _selectedLanguage;
+  String? get selectedLanguage => _selectedLanguage;
+
   String? _error;
   String? get error => _error;
 
@@ -73,7 +77,7 @@ class AppProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // --- NEW: Methods for your new features ---
+  // Methods for existing features (keeping store image for UI purposes)
   void setStoreImage(File? image) {
     _storeImage = image;
     notifyListeners();
@@ -83,8 +87,14 @@ class AppProvider with ChangeNotifier {
     _selectedCity = city;
     notifyListeners();
   }
-  // --------------------------------------------
 
+  // NEW: Language setter
+  void setSelectedLanguage(String? language) {
+    _selectedLanguage = language;
+    notifyListeners();
+  }
+
+  // UPDATED: Now passes language to backend
   Future<bool> startVideoGeneration() async {
     if (_scannedProduct == null) return false;
     _isGenerating = true;
@@ -92,10 +102,12 @@ class AppProvider with ChangeNotifier {
     _generationStatus = "Kicking off the ad-forge engine...";
     notifyListeners();
 
-    // NOTE: Your ApiService.startVideoGenerationJob method will also need to be
-    // updated to accept and send the _storeImage and _selectedCity to your backend.
+    // UPDATED: Now includes language parameter
     final jobId = await ApiService.startVideoGenerationJob(
-        product: _scannedProduct!, context: _marketingContext);
+        product: _scannedProduct!,
+        context: _marketingContext,
+        language: _selectedLanguage // NEW: Passing language to backend
+        );
 
     if (jobId != null) {
       goToTab(3); // Immediately go to the results screen to show progress
@@ -155,7 +167,7 @@ class AppProvider with ChangeNotifier {
     });
   }
 
-  // Updated to reset the new feature states
+  // UPDATED: Reset now includes language
   void resetFlow() {
     _pollingTimer?.cancel();
     _scannedProduct = null;
@@ -166,6 +178,7 @@ class AppProvider with ChangeNotifier {
     _error = null;
     _storeImage = null;
     _selectedCity = null;
+    _selectedLanguage = null; // NEW: Reset language selection
     goToTab(0);
     notifyListeners();
   }

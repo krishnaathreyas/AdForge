@@ -11,12 +11,24 @@ class ApiService {
   static Future<String?> startVideoGenerationJob({
     required Product product,
     required String context,
+    String? language, // NEW: Added language parameter
   }) async {
     final Uri startJobUrl = Uri.parse('$_baseUrl/forge');
     try {
       final headers = {'Content-Type': 'application/json'};
-      // The backend expects the key "user_context", not "context"
-      final body = json.encode({'sku': product.id, 'user_context': context});
+
+      // Updated payload to include language
+      final Map<String, dynamic> payload = {
+        'sku': product.id,
+        'user_context': context,
+      };
+
+      // Only add language to payload if it's selected
+      if (language != null && language.isNotEmpty) {
+        payload['language'] = language;
+      }
+
+      final body = json.encode(payload);
 
       print("🚀 POST /forge with payload: $body");
 

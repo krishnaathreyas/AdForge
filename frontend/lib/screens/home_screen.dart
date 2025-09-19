@@ -7,7 +7,6 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Access the provider
     final provider = context.watch<AppProvider>();
 
     return Scaffold(
