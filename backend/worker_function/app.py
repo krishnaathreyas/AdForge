@@ -6,6 +6,7 @@ import time
 import uuid
 from huggingface_hub import InferenceClient
 from threading import Thread
+import hashlib
 from decimal import Decimal
 
 # Initialize AWS clients
@@ -150,7 +151,7 @@ def generate_voiceover(script, voice_id, api_key, bucket_name):
     return audio_url
 
 
-def generate_video_clip(prompt, hf_client_video, results_list, index):
+def generate_video_clip(prompt, hf_client_video, results_list, index, bucket_name, cache_table):
     """
     Generates a single video clip using the Hugging Face client for Fal.ai.
 
@@ -162,12 +163,39 @@ def generate_video_clip(prompt, hf_client_video, results_list, index):
     """
     print(f"Starting video generation for prompt {index+1}...")
     try:
+        prompt_hash = hashlib.sha256(prompt.encode()).hexdigest()
+        cache_response = cache_table.get_item(Key={'promptHash': prompt_hash})
+        if 'Item' in cache_response:
+            print(f"CACHE HIT for prompt: {prompt[:30]}...")
+            s3_uri = cache_response['Item']['s3_uri']
+            
+            # Download the video bytes from the cached S3 location
+            bucket = s3_uri.split('/')[2]
+            key = '/'.join(s3_uri.split('/')[3:])
+            video_object = s3.get_object(Bucket=bucket, Key=key)
+            results_list[index] = video_object['Body'].read()
+            return
+        
+        print(f"CACHE MISS for prompt: {prompt[:30]}... Generating new clip.")
         video_bytes = hf_client_video.text_to_video(
             prompt,
             model="Wan-AI/Wan2.2-T2V-A14B",
         )
+
+        clip_key = f"cached_clips/{prompt_hash}.mp4"
+        s3.put_object(Bucket=bucket_name, Key=clip_key, Body=video_bytes, ContentType='video/mp4')
+        new_s3_uri = f"s3://{bucket_name}/{clip_key}"
+
+        cache_table.put_item(Item={
+            'promptHash': prompt_hash,
+            'promptText': prompt,
+            's3_uri': new_s3_uri,
+            'createdAt': int(time.time())
+        })
+        print(f"Saved new clip to cache for prompt: {prompt[:30]}...")
         print(f"Finished video generation for prompt {index+1}.")
         results_list[index] = video_bytes
+
     except Exception as e:
         # --- THIS IS THE NEW DEBUGGING LOGIC ---
         print(f"--- DETAILED ERROR CAUGHT for clip {index+1} ---")
@@ -259,8 +287,9 @@ def lambda_handler(event, context):
 
         # 2. Setup: Get table name and API keys
         jobs_table_name = os.environ.get("JOBS_TABLE_NAME")
+        cache_table_name = os.environ.get('CLIP_CACHE_TABLE_NAME')
         table = dynamodb.Table(jobs_table_name)
-
+        cache_table = dynamodb.Table(cache_table_name)
         hf_token = get_secret(os.environ.get("HF_TOKEN_PARAM"))
         elevenlabs_key = get_secret(os.environ.get("ELEVENLABS_API_KEY_PARAM"))
         shotstack_key = get_secret(os.environ.get("SHOTSTACK_API_KEY_PARAM"))
@@ -309,7 +338,7 @@ def lambda_handler(event, context):
 
             thread = Thread(
                 target=generate_video_clip,
-                args=(prompt, hf_client_video, video_clip_bytes, i),
+                args=(prompt, hf_client_video, video_clip_bytes, i, bucket_name, cache_table),
             )
             threads.append(thread)
             thread.start()
