@@ -35,11 +35,11 @@ class _ContextScreenState extends State<ContextScreen> {
   // NEW: Language options
   final List<Map<String, String>> _languageOptions = [
     {'value': 'english', 'label': 'English'},
-    {'value': 'delhi-hindi', 'label': 'Delhi-Hindi'},
-    {'value': 'bengaluru-kannada', 'label': 'Bengaluru-Kannada'},
-    {'value': 'mumbai-marathi', 'label': 'Mumbai-Marathi'},
-    {'value': 'chennai-tamil', 'label': 'Chennai-Tamil'},
-    {'value': 'hyderabad-telugu', 'label': 'Hyderabad-Telugu'},
+    {'value': 'hindi', 'label': 'Delhi-Hindi'},
+    {'value': 'kannada', 'label': 'Bengaluru-Kannada'},
+    {'value': 'marathi', 'label': 'Mumbai-Marathi'},
+    {'value': 'tamil', 'label': 'Chennai-Tamil'},
+    {'value': 'telugu', 'label': 'Hyderabad-Telugu'},
   ];
 
   @override
@@ -256,6 +256,10 @@ class _ContextScreenState extends State<ContextScreen> {
                     onChanged: (String? newValue) {
                       setState(() {
                         _selectedLanguage = newValue;
+                        // Pass the selected value to the AppProvider
+                        context
+                            .read<AppProvider>()
+                            .setSelectedLanguage(newValue);
                       });
                     },
                   ),

@@ -102,6 +102,13 @@ class AppProvider with ChangeNotifier {
     _generationStatus = "Kicking off the ad-forge engine...";
     notifyListeners();
 
+    // Add a print statement here to see what's being passed
+    print("--- API Call to startVideoGenerationJob ---");
+    print("Product: ${_scannedProduct!.name}");
+    print("Context: $_marketingContext");
+    print("Language: $_selectedLanguage");
+    print("------------------------------------------");
+
     // UPDATED: Now includes language parameter
     final jobId = await ApiService.startVideoGenerationJob(
         product: _scannedProduct!,
