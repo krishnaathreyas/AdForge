@@ -1,10 +1,39 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/product.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class ApiService {
   static const String _baseUrl =
       'https://y2fls39ue8.execute-api.ap-south-1.amazonaws.com/Prod';
+
+  // Add this method to your existing ApiService class
+  static Future<Map<String, dynamic>> generateAd({
+    required String productName,
+    String language = 'English',
+    String userContext = 'General',
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse(_baseUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'productName': productName,
+          'language': language,
+          'userContext': userContext,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Failed to generate ad: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error generating ad: $e');
+    }
+  }
 
   /// Calls the /forge endpoint to start the video generation.
   /// Expects the backend to immediately return a unique 'jobId'.

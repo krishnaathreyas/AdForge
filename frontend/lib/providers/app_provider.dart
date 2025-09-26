@@ -10,6 +10,13 @@ class AppProvider with ChangeNotifier {
   int _selectedIndex = 0;
   int get selectedIndex => _selectedIndex;
 
+  AdResult? _adResult;
+  bool _isGeneratingAd = false;
+
+// Add these getters after your existing getters
+  AdResult? get adResult => _adResult;
+  bool get isGeneratingAd => _isGeneratingAd;
+
   // App Data State
   Product? _scannedProduct;
   Product? get scannedProduct => _scannedProduct;
@@ -92,6 +99,42 @@ class AppProvider with ChangeNotifier {
   void setSelectedLanguage(String? language) {
     _selectedLanguage = language;
     notifyListeners();
+  }
+
+  Future<void> generateAd({
+    required String productName,
+    String language = 'English',
+    String userContext = 'General',
+  }) async {
+    _isGeneratingAd = true;
+    notifyListeners();
+
+    try {
+      final result = await ApiService.generateAd(
+        productName: productName,
+        language: language,
+        userContext: userContext,
+      );
+
+      _adResult = AdResult.fromJson(result);
+
+      // Add activity for successful generation
+      addActivity(ActivityItem(
+        icon: Icons.play_circle_outline,
+        iconColor: Colors.green,
+        title: 'Ad Generated',
+        subtitle: productName,
+        time: 'Just now',
+      ));
+    } catch (e) {
+      _adResult = AdResult(
+        message: 'Error: $e',
+        status: 'Failed',
+      );
+    } finally {
+      _isGeneratingAd = false;
+      notifyListeners();
+    }
   }
 
   // UPDATED: Now passes language to backend
@@ -185,7 +228,9 @@ class AppProvider with ChangeNotifier {
     _error = null;
     _storeImage = null;
     _selectedCity = null;
-    _selectedLanguage = null; // NEW: Reset language selection
+    _selectedLanguage = null;
+    _adResult = null; // NEW: Reset ad result
+    _isGeneratingAd = false; // NEW: Reset ad generation state
     goToTab(0);
     notifyListeners();
   }
