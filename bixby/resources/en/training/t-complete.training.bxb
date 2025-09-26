@@ -1,0 +1,44 @@
+train (t-galaxy-s24-ultra) {
+  utterance ([g:ProductName] Galaxy S24 Ultra)
+  last-modified (1758854687211)
+}
+
+train (t-galaxy-s24-ultra-alt) {
+  utterance ([g:ProductName] Samsung Galaxy S24 Ultra)
+  last-modified (1758854687211)
+}
+
+train (t-neo-qled-8k-tv) {
+  utterance ([g:ProductName] Neo QLED 8K TV)
+  last-modified (1758854687211)
+}
+
+train (t-neo-qled-8k-tv-alt) {
+  utterance ([g:ProductName] Samsung Neo QLED 8K TV)
+  last-modified (1758854687211)
+}
+
+train (t-bespoke-ai-washer) {
+  utterance ([g:ProductName] Bespoke AI Washer)
+  last-modified (1758854687211)
+}
+
+train (t-bespoke-ai-washer-alt) {
+  utterance ([g:ProductName] Samsung Bespoke AI Washer)
+  last-modified (1758854687211)
+}
+
+train (t-complete-example-1) {
+  utterance ([g:CreateAdForgeAd] Use Ad-Forge to create an ad for the Galaxy S24 Ultra about the Cricket World Cup)
+  last-modified (1758854687211)
+}
+
+train (t-complete-example-2) {
+  utterance ([g:CreateAdForgeAd] Create an advertisement for Neo QLED 8K TV with holiday theme)
+  last-modified (1758854687211)
+}
+
+train (t-complete-example-3) {
+  utterance ([g:CreateAdForgeAd] Make an ad for Bespoke AI Washer about eco-friendly features)
+  last-modified (1758854687211)
+}

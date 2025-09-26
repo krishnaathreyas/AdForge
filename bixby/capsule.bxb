@@ -1,12 +1,12 @@
 capsule {
-  id (namespace.adForgeVoiceAssistant)
+  id (playground.adForgeVoiceAssistant)
   version (0.1.0)
   format (3)
   targets {
     target (bixby-mobile-en-US)
   }
-  runtime-version (9){
-      js-runtime-version (2)
+  runtime-version (9) {
+    js-runtime-version (2)
   }
   store-countries {
     all

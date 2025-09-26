@@ -1,25 +1,12 @@
-// // This is the main view that renders when the action is complete.
-// result-view {
-//   match: AdForgeResult (this)
+// This is the main view that renders when the action is complete.
+result-view {
+  match: AdForgeResult (this)
 
-//   render {
-//     // Here, we call the macro from the other file to render the UI.
-//     macro (AdForgeResult_Summary) {
-//       param (result) {
-//         expression (this)
-//       }
-//     }
-//   }
-
-//   // Conditionally launch the app on success.
-//   if (this.success == true) {
-//     app-launch {
-//       uri ("adforge://create")
-//       params {
-//         param (sku) { expression (this.product.sku) }
-//         param (user_context) { expression (this.context.context) }
-//         param (language) { expression (this.context.language) }
-//       }
-//     }
-//   }
-// }
+  render {
+    macro (AdForgeResult_Summary) {
+      param (result) {
+        expression (this)
+      }
+    }
+  }
+}
