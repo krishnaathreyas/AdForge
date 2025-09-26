@@ -1,0 +1,17 @@
+capsule-info {
+  display-name (Ad-Forge Voice Assistant)
+  developer-name (abhinav-krishna)
+  description ("Example capsule description")
+  dispatch-name (Ad-Forge)
+  dispatch-aliases {
+    alias (Ad Forge Voice)
+  }
+  // Set your own image for your capsule's icon
+  icon-asset (images/icons/bixby_launcher.png)
+  search-keywords {
+    keyword (advertisement)
+    keyword (ad forge)
+    keyword (marketing)
+    keyword (video generator)
+  }
+}

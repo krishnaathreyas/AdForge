@@ -1,0 +1,15 @@
+structure (MarketingContext) {
+  description (Marketing context for advertisement creation)
+
+  property (context) {
+    type (ContextDescription)
+    min (Required) max (One)
+    description (The marketing context or theme for the advertisement)
+  }
+
+  property (language) {
+    type (Language)
+    min (Optional) max (One)
+    description (Preferred language for the advertisement)
+  }
+}

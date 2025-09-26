@@ -1,0 +1,15 @@
+
+enum (ProductName) {
+  description (Available Samsung products for advertising)
+  symbol (GalaxyS24Ultra) {
+    description (Samsung Galaxy S24 Ultra smartphone)
+  }
+
+  symbol (NeoQLED8KTV) {
+    description (Samsung Neo QLED 8K TV)
+  }
+
+  symbol (BespokeAIWasher) {
+    description (Samsung Bespoke AI EcoBubble Washer)
+  }
+}

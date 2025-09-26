@@ -1,0 +1,14 @@
+dialog (Result) {
+  match: AdForgeResult (this)
+  
+  if (this.success == true) {
+    // If successful, Bixby will randomly say one of these templates
+    template ("Okay, starting the Ad-Forge job for the #{value(this.product.name)}.")
+    template ("Great! Your ad for the #{value(this.product.name)} is now being created.")
+  } 
+  // Handle the case where 'success' is false
+  else {
+    // If it failed, Bixby will state the error message from your result
+    template ("I'm sorry, I encountered an issue: #{value(this.message)}")
+  }
+}
