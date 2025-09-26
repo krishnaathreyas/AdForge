@@ -1,0 +1,13 @@
+hints {
+  // Use the 'uncategorized' block for capsules without specific NL categories.
+  uncategorized {
+    // Hint 1: Includes the dispatch name "Ad-Forge"
+    hint ("Use Ad-Forge to create an ad for the Galaxy S24 Ultra about the Cricket World Cup")
+
+    // Hint 2: Includes the dispatch name "Ad-Forge"
+    hint ("Ask Ad-Forge to generate an advertisement for Samsung Neo QLED 8K TV for the Olympics")
+
+    // Hint 3: Includes the dispatch name "Ad-Forge"
+    hint ("With Ad-Forge, create a Samsung Bespoke AI Washer ad for the holiday season")
+  }
+}

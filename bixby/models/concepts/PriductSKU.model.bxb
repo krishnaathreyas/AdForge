@@ -1,0 +1,13 @@
+enum (ProductSKU) {
+  description (Product SKU identifiers)
+
+  symbol (PROD-S24ULTRA){
+    description (SKU for Galaxy S24 Ultra)
+  }
+  symbol (PROD-QN900D-TV){
+    description (SKU for Neo QLED 8K TV)
+  }
+  symbol (PROD-WW12T504DAB){
+    description (SKU for Bespoke AI Washer)
+  }
+}

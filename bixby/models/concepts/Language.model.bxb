@@ -1,0 +1,22 @@
+enum (Language) {
+  description (Supported languages for advertisements)
+
+  symbol (English){
+    description (English language)
+  }
+  symbol (Hindi){
+    description (Hindi language)
+  }
+  symbol (Kannada){
+    description (Kannada language)
+  }
+  symbol (Marathi){
+    description (Marathi language)
+  }
+  symbol (Tamil){
+    description (Tamil language)
+  }
+  symbol (Telugu){
+    description (Telugu language)
+  }
+}

@@ -1,0 +1,15 @@
+structure (Product) {
+  description (A Samsung product that can be advertised)
+
+  property (name) {
+    type (ProductName)
+    min (Required) max (One)
+    description (The name of the Samsung product)
+  }
+
+  property (sku) {
+    type (ProductSKU)
+    min (Required) max (One)
+    description (The SKU identifier for the product)
+  }
+}

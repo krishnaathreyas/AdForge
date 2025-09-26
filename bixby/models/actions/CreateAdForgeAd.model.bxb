@@ -1,0 +1,19 @@
+action (CreateAdForgeAd) {
+  description (Create an advertisement using Ad-Forge)
+  type (Search)
+
+  collect {
+    input (product) {
+      type (Product)
+      min (Required) max (One)
+      description (Which Samsung product to advertise?)
+    }
+
+    input (marketingContext) {
+      type (MarketingContext)
+      min (Required) max (One)
+      description (What is the marketing context or theme?)
+    }
+  }
+  output (AdForgeResult)
+}

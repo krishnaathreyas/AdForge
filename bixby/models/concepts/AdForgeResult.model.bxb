@@ -1,0 +1,23 @@
+structure (AdForgeResult) {
+  description (Result of Ad-Forge advertisement creation)
+
+  property (success) {
+    type (core.Boolean)
+    min (Required) max (One)
+  }
+
+  property (message) {
+    type (core.Text)
+    min (Optional) max (One)
+  }
+
+  property (product) {
+    type (Product)
+    min (Required) max (One)
+  }
+
+  property (context) {
+    type (MarketingContext)
+    min (Required) max (One)
+  }
+}
