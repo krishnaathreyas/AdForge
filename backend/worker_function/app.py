@@ -6,6 +6,7 @@ import time
 import uuid
 from huggingface_hub import InferenceClient
 from threading import Thread
+import hashlib
 from decimal import Decimal
 
 # Initialize AWS clients
@@ -32,7 +33,7 @@ def get_secret(param_name):
         raise
 
 
-def generate_ad_blueprint(product_data, user_context, api_key):
+def generate_ad_blueprint(product_data, user_context, api_key, language_preference):
     """
     Acts as an AI Creative Director, using an LLM to generate a complete ad blueprint.
 
@@ -44,7 +45,8 @@ def generate_ad_blueprint(product_data, user_context, api_key):
     Returns:
         dict: A JSON object containing the 'acts' (visual prompts) and the 'voiceover_script'.
     """
-    print("Generating ad blueprint and casting voice from LLM...")
+
+    print(f"Generating multilingual ad blueprint for language: {language_preference}...")
 
     # This is your curated library of voice actors using the IDs you provided.
     voice_options = {
@@ -53,9 +55,19 @@ def generate_ad_blueprint(product_data, user_context, api_key):
         "professional_female_voice_2": "2zRM7PkgwBPiau2jvVXc", 
     }
 
+    language_examples = {
+        "Kannada": "ಈಗ ನಿಮ್ಮ ನೆಚ್ಚಿನ ಧಾರಾವಾಹಿಯನ್ನು ಸ್ಯಾಮ್ಸಂಗ್ ಟಿವಿಯಲ್ಲಿ ನೋಡಿ.",
+        "Hindi": "अब, अपने पसंदीदा शो का आनंद सैमसंग टीवी पर लें।",
+        "Marathi": "आता, तुमचा आवडता शो सॅमसंग टीव्हीवर बघा.",
+        "Tamil": "இப்போது, உங்களுக்குப் பிடித்த நிகழ்ச்சியை சாம்சங் டிவியில் பாருங்கள்.",
+        "Telugu": "ఇప్పుడు, మీకు ఇష్టమైన కార్యక్రమాన్ని శాంసంగ్ టీవీలో చూడండి."
+    }
+
+    style_example = language_examples.get(language_preference, "The script must be in clear, conversational English.")
+
     # --- START OF CHANGE ---
     prompt = f"""
-    You are an expert but cautious creative director for a Samsung ad. The total ad length will be 26 seconds, with the final 2 seconds being a silent branding outro.
+    You are an expert but cautious creative director and a linguistics expert for Samsung ads. The total ad length will be 26 seconds, with the final 2 seconds being a silent branding outro.
     Your primary goal is to generate a blueprint with visual prompts that are safe and will not be flagged by downstream AI content filters.
 
     Your task is to generate a complete creative blueprint as a single, valid JSON object.
@@ -67,8 +79,13 @@ def generate_ad_blueprint(product_data, user_context, api_key):
        - AVOID words related to impact, drama, or conflict (e.g., "shot", "dramatic", "tension", "hit").
        - INSTEAD, use safer synonyms (e.g., "a view of", "a scene showing", "an exciting moment", "connecting with the ball").
        - Focus on the product, scenery, and positive emotions.
-    2. "voiceover_script": A cohesive voiceover script, that is timed to last approximately 22-23 seconds, ensuring it ends naturally before the final branding shot.
-    3. "voice_id": Based on the user's context, select the SINGLE MOST appropriate voice for the ad's tone from the 'Available Voice IDs' and return its corresponding unique ID string (the value), not its descriptive name (the key).
+    2. "Determine Language": The user's language preference is "{language_preference}".
+    3. "voiceover_script": A cohesive voiceover script in the determined language, timed to last approximately 17-18 seconds., that is timed to last approximately 22-23 seconds, ensuring it ends naturally before the final branding shot.
+        - The script MUST use the native script (e.g., Kannada script, Hindi script).
+        - THE Script  must include all the UPSTRESS  and DOWNSTRESS.
+        - The language MUST be natural and conversational.
+        - **Follow this style example:** '{style_example}'
+    4. "voice_id": Based on the user's context, select the SINGLE MOST appropriate voice for the ad's tone from the 'Available Voice IDs' and return its corresponding unique ID string (the value), not its descriptive name (the key).
 
     Product Name: {product_data.get('productName')}
     User Context: {user_context}
@@ -150,7 +167,7 @@ def generate_voiceover(script, voice_id, api_key, bucket_name):
     return audio_url
 
 
-def generate_video_clip(prompt, hf_client_video, results_list, index):
+def generate_video_clip(prompt, hf_client_video, results_list, index, bucket_name, cache_table):
     """
     Generates a single video clip using the Hugging Face client for Fal.ai.
 
@@ -162,12 +179,39 @@ def generate_video_clip(prompt, hf_client_video, results_list, index):
     """
     print(f"Starting video generation for prompt {index+1}...")
     try:
+        prompt_hash = hashlib.sha256(prompt.encode()).hexdigest()
+        cache_response = cache_table.get_item(Key={'promptHash': prompt_hash})
+        if 'Item' in cache_response:
+            print(f"CACHE HIT for prompt: {prompt[:30]}...")
+            s3_uri = cache_response['Item']['s3_uri']
+            
+            # Download the video bytes from the cached S3 location
+            bucket = s3_uri.split('/')[2]
+            key = '/'.join(s3_uri.split('/')[3:])
+            video_object = s3.get_object(Bucket=bucket, Key=key)
+            results_list[index] = video_object['Body'].read()
+            return
+        
+        print(f"CACHE MISS for prompt: {prompt[:30]}... Generating new clip.")
         video_bytes = hf_client_video.text_to_video(
             prompt,
             model="Wan-AI/Wan2.2-T2V-A14B",
         )
+
+        clip_key = f"cached_clips/{prompt_hash}.mp4"
+        s3.put_object(Bucket=bucket_name, Key=clip_key, Body=video_bytes, ContentType='video/mp4')
+        new_s3_uri = f"s3://{bucket_name}/{clip_key}"
+
+        cache_table.put_item(Item={
+            'promptHash': prompt_hash,
+            'promptText': prompt,
+            's3_uri': new_s3_uri,
+            'createdAt': int(time.time())
+        })
+        print(f"Saved new clip to cache for prompt: {prompt[:30]}...")
         print(f"Finished video generation for prompt {index+1}.")
         results_list[index] = video_bytes
+
     except Exception as e:
         # --- THIS IS THE NEW DEBUGGING LOGIC ---
         print(f"--- DETAILED ERROR CAUGHT for clip {index+1} ---")
@@ -242,14 +286,14 @@ def generate_final_video(clips, voiceover_url, music_url, api_key):
     raise Exception("Video rendering timed out.")
 
 
-def lambda_handler(event, context):
-    """
+"""def lambda_handler(event, context):
+    
     The main handler for the long-running worker function.
 
     This function is triggered asynchronously by the ForgeFunction. It fetches job
     details from DynamoDB, runs the full generative AI pipeline, and updates
     DynamoDB with the final result or an error message.
-    """
+    
 
     job_id = ""
     try:
@@ -259,8 +303,9 @@ def lambda_handler(event, context):
 
         # 2. Setup: Get table name and API keys
         jobs_table_name = os.environ.get("JOBS_TABLE_NAME")
+        cache_table_name = os.environ.get('CLIP_CACHE_TABLE_NAME')
         table = dynamodb.Table(jobs_table_name)
-
+        cache_table = dynamodb.Table(cache_table_name)
         hf_token = get_secret(os.environ.get("HF_TOKEN_PARAM"))
         elevenlabs_key = get_secret(os.environ.get("ELEVENLABS_API_KEY_PARAM"))
         shotstack_key = get_secret(os.environ.get("SHOTSTACK_API_KEY_PARAM"))
@@ -277,7 +322,7 @@ def lambda_handler(event, context):
         request_body = item.get("requestBody", {})
         sku = request_body.get("sku")
         user_context = request_body.get("user_context")
-
+        language_preference = request_body.get('language', 'English')
         bucket_name = "ad-forge-database-amg-2025"
 
         # -- 2. GET DATA & BLUEPRINT --
@@ -293,7 +338,7 @@ def lambda_handler(event, context):
 
         print("Generating ad blueprint...")
         hf_client = InferenceClient(token=openrouter_key)
-        ad_blueprint = generate_ad_blueprint(product_data, user_context, openrouter_key)
+        ad_blueprint = generate_ad_blueprint(product_data, user_context, openrouter_key, language_preference)
         hf_client_video = InferenceClient(provider="replicate", token=hf_token, timeout=120)
 
         # -- 3. GENERATE ALL ASSETS IN PARALLEL --
@@ -309,7 +354,7 @@ def lambda_handler(event, context):
 
             thread = Thread(
                 target=generate_video_clip,
-                args=(prompt, hf_client_video, video_clip_bytes, i),
+                args=(prompt, hf_client_video, video_clip_bytes, i, bucket_name, cache_table),
             )
             threads.append(thread)
             thread.start()
@@ -430,4 +475,75 @@ def lambda_handler(event, context):
             UpdateExpression="SET #s = :status, errorMessage = :error",
             ExpressionAttributeNames={"#s": "status"},
             ExpressionAttributeValues={":status": "FAILED", ":error": str(e)},
+        )"""
+    
+def lambda_handler(event, context):
+    """
+    TEMPORARY WORKER for testing blueprint and dynamic audio.
+    It generates the blueprint and the voiceover, then stops.
+    """
+    job_id = ""
+    try:
+        # 1. Get Job ID from the trigger event
+        job_id = event['jobId']
+        print(f"WORKER (Audio Test Mode) started for Job ID: {job_id}")
+
+        # 2. Setup: Get table name and API keys
+        jobs_table_name = os.environ.get('JOBS_TABLE_NAME')
+        table = dynamodb.Table(jobs_table_name)
+
+        openrouter_key = get_secret(os.environ.get('OPENROUTER_API_KEY_PARAM'))
+        elevenlabs_key = get_secret(os.environ.get('ELEVENLABS_API_KEY_PARAM'))
+        
+        # 3. Fetch Job Details from DynamoDB
+        response = table.get_item(Key={'jobId': job_id})
+        item = response.get('Item')
+        if not item:
+            raise Exception(f"Job {job_id} not found in DynamoDB.")
+
+        request_body = item.get('requestBody', {})
+        sku = request_body.get('sku')
+        user_context = request_body.get('user_context')
+        language_preference = request_body.get('language', 'English')
+        # Get product data from S3
+        bucket_name = os.environ.get('PRODUCT_DB_BUCKET')
+        db_object = s3.get_object(Bucket=bucket_name, Key='product_db.json')
+        product_database = json.loads(db_object['Body'].read().decode('utf-8'))
+        product_data = product_database.get(sku)
+
+        # 4. Generate the Blueprint (with the dynamic voice_id)
+        ad_blueprint = generate_ad_blueprint(product_data, user_context, openrouter_key, language_preference)
+        
+        # 5. Generate the Voiceover using the AI-selected voice
+        voiceover_url = generate_voiceover(
+            ad_blueprint['voiceover_script'],
+            ad_blueprint['voice_id'],
+            elevenlabs_key,
+            bucket_name
+        )
+
+        # 6. Update Job Status in DynamoDB with the audio file URL and blueprint
+        print(f"Audio test complete. Updating job {job_id} to COMPLETE.")
+        table.update_item(
+            Key={'jobId': job_id},
+            UpdateExpression="SET #s = :status, generatedAudioUrl = :url, blueprint = :bp, updatedAt = :time",
+            ExpressionAttributeNames={'#s': 'status'},
+            ExpressionAttributeValues={
+                ':status': 'COMPLETE',
+                ':url': voiceover_url,
+                ':bp': ad_blueprint,
+                ':time': int(time.time())
+            }
+        )
+        
+    except Exception as e:
+        print(f"Worker (Audio Test Mode) failed for Job ID {job_id}. Error: {e}")
+        # Update job status to FAILED in DynamoDB
+        jobs_table_name = os.environ.get('JOBS_TABLE_NAME')
+        table = dynamodb.Table(jobs_table_name)
+        table.update_item(
+            Key={'jobId': event.get('jobId', 'unknown')},
+            UpdateExpression="SET #s = :status, errorMessage = :error",
+            ExpressionAttributeNames={'#s': 'status'},
+            ExpressionAttributeValues={':status': 'FAILED', ':error': str(e)}
         )

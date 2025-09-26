@@ -16,9 +16,10 @@ lint = true
 capabilities = "CAPABILITY_IAM"
 confirm_changeset = true
 resolve_s3 = true
-s3_prefix = "backend"
+s3_prefix = "backend-dev"
 region = "ap-south-1"
 image_repositories = []
+stack_name = "backend-dev"
 
 [default.package.parameters]
 resolve_s3 = true

@@ -23,6 +23,17 @@ Resources:
         - AttributeName: jobId
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
+  
+  ClipCacheTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: promptHash
+          AttributeType: S
+      KeySchema:
+        - AttributeName: promptHash
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
 
   # Lambda Function #1: Starts the job
   ForgeFunction:
@@ -59,6 +70,7 @@ Resources:
       Environment:
         Variables:
           JOBS_TABLE_NAME: !Ref JobsTable
+          CLIP_CACHE_TABLE_NAME: !Ref ClipCacheTable 
           PRODUCT_DB_BUCKET: "ad-forge-database-amg-2025"
           # --- CORRECTED KEYS for Hugging Face Workflow ---
           OPENROUTER_API_KEY_PARAM: /ad-forge/openrouter-api-key
@@ -72,6 +84,8 @@ Resources:
             BucketName: "ad-forge-database-amg-2025"
         - DynamoDBCrudPolicy:
             TableName: !Ref JobsTable
+        - DynamoDBCrudPolicy: 
+            TableName: !Ref ClipCacheTable
         - Statement:
           - Effect: Allow
             Action:

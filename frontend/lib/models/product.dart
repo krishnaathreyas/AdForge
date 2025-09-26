@@ -81,3 +81,48 @@ class Product {
         ),
       ];
 }
+
+class AdResult {
+  final String message;
+  final String? videoUrl;
+  final ProductInfo? productInfo;
+  final String status;
+
+  AdResult({
+    required this.message,
+    this.videoUrl,
+    this.productInfo,
+    required this.status,
+  });
+
+  factory AdResult.fromJson(Map<String, dynamic> json) {
+    return AdResult(
+      message: json['message'] ?? '',
+      videoUrl: json['videoUrl'],
+      productInfo: json['productInfo'] != null
+          ? ProductInfo.fromJson(json['productInfo'])
+          : null,
+      status: json['status'] ?? 'Failed',
+    );
+  }
+}
+
+class ProductInfo {
+  final String productName;
+  final String? language;
+  final String? userContext;
+
+  ProductInfo({
+    required this.productName,
+    this.language,
+    this.userContext,
+  });
+
+  factory ProductInfo.fromJson(Map<String, dynamic> json) {
+    return ProductInfo(
+      productName: json['productName'] ?? '',
+      language: json['language'],
+      userContext: json['userContext'],
+    );
+  }
+}

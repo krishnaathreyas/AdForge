@@ -2,12 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 
+class AdResult {
+  final String status;
+  final String message;
+  final String? videoUrl;
+
+  AdResult({required this.status, required this.message, this.videoUrl});
+}
+
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Access the provider
     final provider = context.watch<AppProvider>();
 
     return Scaffold(
@@ -87,6 +94,31 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                height: 60,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    _showAdGenerationDialog(context, provider);
+                  },
+                  icon: const Icon(Icons.video_call, color: Colors.white),
+                  label: const Text(
+                    'Generate Ad',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF10B981),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
               // Build the list of recent activities from the provider
               ListView.separated(
                 itemCount: provider.recentActivities.length,
@@ -99,6 +131,8 @@ class HomeScreen extends StatelessWidget {
                 separatorBuilder: (context, index) =>
                     const SizedBox(height: 15),
               ),
+              if (provider.adResult != null)
+                _buildAdResult(provider.adResult! as AdResult),
             ],
           ),
         ),
@@ -159,4 +193,115 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+// Add this method after your _buildActivityItem method
+void _showAdGenerationDialog(BuildContext context, AppProvider provider) {
+  String productName = '';
+  String userContext = 'General';
+
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      backgroundColor: const Color(0xFF1F1F3A),
+      title: const Text(
+        'Generate Ad',
+        style: TextStyle(color: Colors.white),
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            onChanged: (value) => productName = value,
+            decoration: const InputDecoration(
+              labelText: 'Product Name',
+              labelStyle: TextStyle(color: Colors.white),
+            ),
+            style: const TextStyle(color: Colors.white),
+          ),
+          const SizedBox(height: 16),
+          DropdownButton<String>(
+            value: userContext,
+            onChanged: (value) => userContext = value!,
+            items: ['General', 'Sale', 'Electronics', 'Clothing', 'Grocery']
+                .map((context) => DropdownMenuItem(
+                      value: context,
+                      child: Text(
+                        context,
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    ))
+                .toList(),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.pop(context);
+            provider.generateAd(
+              productName: productName,
+              userContext: userContext,
+            );
+          },
+          child: const Text('Generate'),
+        ),
+      ],
+    ),
+  );
+}
+
+// Add this method after _showAdGenerationDialog
+Widget _buildAdResult(AdResult result) {
+  return Container(
+    margin: const EdgeInsets.only(top: 20),
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: const Color(0xFF1F1F3A),
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Ad Generation Result',
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'Status: ${result.status}',
+          style: TextStyle(
+            fontSize: 14,
+            color: result.status == 'Success' ? Colors.green : Colors.orange,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Message: ${result.message}',
+          style: const TextStyle(
+            fontSize: 14,
+            color: Colors.white,
+          ),
+        ),
+        if (result.videoUrl != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            'Video URL: ${result.videoUrl}',
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.blue,
+            ),
+          ),
+        ],
+      ],
+    ),
+  );
 }
