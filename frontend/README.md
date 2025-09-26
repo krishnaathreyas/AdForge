@@ -1,10 +1,10 @@
-# Ad-Forge Frontend 📱✨
+# Ad-Forge Frontend 
 
-This is the official Flutter application for the Ad-Forge project, built for the Samsung Hackathon. It provides a mobile interface for scanning products and generating customized, AI-powered video advertisements based on local marketing contexts.
+This is the Flutter application for the Ad-Forge project, built for the Samsung Hackathon. It provides a mobile interface for scanning products and generating customized, AI-powered video advertisements based on local marketing contexts.
 
 ---
 
-### 📸 Screenshots
+### Screenshots
 
 | Home Screen | Scanner Screen | Context Screen | Results Screen |
 | :---: | :---: | :---: | :---: |
@@ -14,7 +14,7 @@ This is the official Flutter application for the Ad-Forge project, built for the
 
 ---
 
-### ✨ Features
+### 1.Features
 
 * **Product Scanning:** Utilizes the device's camera to scan QR codes and identify products.
 * **Contextual Input:** Allows users to provide detailed marketing context, upload a store image for hyper-personalization, and select a regional location for dialect-specific voiceovers.
@@ -26,7 +26,7 @@ This is the official Flutter application for the Ad-Forge project, built for the
 
 ---
 
-### 🛠️ Tech Stack & Key Packages
+### 2.Tech Stack & Key Packages
 
 This application is built with the Flutter framework and the Dart programming language.
 
@@ -42,7 +42,7 @@ This application is built with the Flutter framework and the Dart programming la
 
 ---
 
-### 🚀 Getting Started
+### 3.Getting Started
 
 To get a local copy up and running, follow these simple steps.
 
@@ -66,7 +66,7 @@ To get a local copy up and running, follow these simple steps.
 
 ---
 
-### 📂 Project Structure
+### 4.Project Structure
 
 The code within the `lib/` directory is organized to follow clean architecture principles:
 
