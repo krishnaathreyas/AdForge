@@ -11,21 +11,22 @@ macro-def (AdForgeResult_Summary) {
 
   // This is the visual layout of the macro.
   content {
-    section {
-      content {
-        // Display the main status message from the result object.
-        paragraph {
-          value ("#{value(result.message)}")
-          style (Title_M)
-        }
-        // Display the product name from the result object.
-        single-line {
-          text ("Product: #{value(result.product.name)}")
-
-        }
-        // Display the marketing theme from the result object.
-        single-line {
-          text ("Theme: #{value(result.context.context)}")
+    layout {
+      section {
+        content {
+          // Display the main status message from the result object.
+          paragraph {
+            value ("#{value(result.message)}")
+            style (Title_M)
+          }
+          // Display the product name from the result object.
+          single-line {
+            text ("Product: #{value(result.product.name)}")
+          }
+          // Display the marketing theme from the result object.
+          single-line {
+            text ("Theme: #{value(result.context.context)}")
+          }
         }
       }
     }

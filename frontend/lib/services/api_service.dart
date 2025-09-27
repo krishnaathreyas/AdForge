@@ -6,12 +6,11 @@ import 'package:http/http.dart' as http;
 
 class ApiService {
   static const String _baseUrl =
-      'https://y2fls39ue8.execute-api.ap-south-1.amazonaws.com/Prod';
+      'https://7i5316q6o2.execute-api.ap-south-1.amazonaws.com/Prod/';
 
   // Add this method to your existing ApiService class
   static Future<Map<String, dynamic>> generateAd({
     required String productName,
-    String language = 'English',
     String userContext = 'General',
   }) async {
     try {
@@ -20,7 +19,6 @@ class ApiService {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'productName': productName,
-          'language': language,
           'userContext': userContext,
         }),
       );
@@ -40,7 +38,6 @@ class ApiService {
   static Future<String?> startVideoGenerationJob({
     required Product product,
     required String context,
-    String? language, // NEW: Added language parameter
   }) async {
     final Uri startJobUrl = Uri.parse('$_baseUrl/forge');
     try {
@@ -51,11 +48,6 @@ class ApiService {
         'sku': product.id,
         'user_context': context,
       };
-
-      // Only add language to payload if it's selected
-      if (language != null && language.isNotEmpty) {
-        payload['language'] = language;
-      }
 
       final body = json.encode(payload);
 

@@ -1,4 +1,3 @@
-
 enum (ProductName) {
   description (Available Samsung products for advertising)
   symbol (GalaxyS24Ultra) {

@@ -18,9 +18,6 @@ class _ContextScreenState extends State<ContextScreen> {
   // CRITICAL: Keep this loading state from original
   bool _isButtonLoading = false;
 
-  // NEW: Language dropdown state
-  String? _selectedLanguage;
-
   final List<String> _suggestions = [
     'Student Discounts',
     'Eco-Friendly Features',
@@ -203,66 +200,6 @@ class _ContextScreenState extends State<ContextScreen> {
                       ),
                     ),
                   ],
-                ),
-              ),
-
-              // NEW: Language Selection Dropdown
-              const Text(
-                'Language:',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 15),
-              Container(
-                width: double.infinity,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1F1F3A),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFF2A2A4E)),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _selectedLanguage,
-                    hint: Text(
-                      'Language',
-                      style: TextStyle(
-                        color: Colors.grey.shade400,
-                        fontSize: 16,
-                      ),
-                    ),
-                    icon: Icon(
-                      Icons.keyboard_arrow_down,
-                      color: Colors.grey.shade400,
-                    ),
-                    dropdownColor: const Color(0xFF1F1F3A),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                    ),
-                    items: _languageOptions.map((language) {
-                      return DropdownMenuItem<String>(
-                        value: language['value'],
-                        child: Text(
-                          language['label']!,
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        _selectedLanguage = newValue;
-                        // Pass the selected value to the AppProvider
-                        context
-                            .read<AppProvider>()
-                            .setSelectedLanguage(newValue);
-                      });
-                    },
-                  ),
                 ),
               ),
 

@@ -1,8 +1,7 @@
 // This imports Bixby's library for making HTTP requests.
-const http = require('http'); 
-const https = require('https');
+import http from 'http';
 
-module.exports.function = function createAdForgeAd(product, marketingContext) {
+export default function createAdForgeAd(product, marketingContext) {
   // --- 1. Prepare the Data ---
 
   // Map the Bixby product concepts to the SKUs your backend understands.
@@ -23,7 +22,7 @@ module.exports.function = function createAdForgeAd(product, marketingContext) {
 
   // --- 2. Call Your Backend API ---
 
-  // ❗ IMPORTANT: Replace this with your actual AWS API Gateway URL.
+  // IMPORTANT: Replace this with your actual AWS API Gateway URL.
   const url = 'https://7i5316q6o2.execute-api.ap-south-1.amazonaws.com/Prod/forge';
 
   const options = {
