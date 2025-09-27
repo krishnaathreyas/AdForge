@@ -10,13 +10,6 @@ class AppProvider with ChangeNotifier {
   int _selectedIndex = 0;
   int get selectedIndex => _selectedIndex;
 
-  AdResult? _adResult;
-  bool _isGeneratingAd = false;
-
-// Add these getters after your existing getters
-  AdResult? get adResult => _adResult;
-  bool get isGeneratingAd => _isGeneratingAd;
-
   // App Data State
   Product? _scannedProduct;
   Product? get scannedProduct => _scannedProduct;
@@ -34,10 +27,6 @@ class AppProvider with ChangeNotifier {
   File? get storeImage => _storeImage;
   String? _selectedCity;
   String? get selectedCity => _selectedCity;
-
-  // NEW: Language state
-  String? _selectedLanguage;
-  String? get selectedLanguage => _selectedLanguage;
 
   String? _error;
   String? get error => _error;
@@ -95,48 +84,6 @@ class AppProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // NEW: Language setter
-  void setSelectedLanguage(String? language) {
-    _selectedLanguage = language;
-    notifyListeners();
-  }
-
-  Future<void> generateAd({
-    required String productName,
-    String language = 'English',
-    String userContext = 'General',
-  }) async {
-    _isGeneratingAd = true;
-    notifyListeners();
-
-    try {
-      final result = await ApiService.generateAd(
-        productName: productName,
-        language: language,
-        userContext: userContext,
-      );
-
-      _adResult = AdResult.fromJson(result);
-
-      // Add activity for successful generation
-      addActivity(ActivityItem(
-        icon: Icons.play_circle_outline,
-        iconColor: Colors.green,
-        title: 'Ad Generated',
-        subtitle: productName,
-        time: 'Just now',
-      ));
-    } catch (e) {
-      _adResult = AdResult(
-        message: 'Error: $e',
-        status: 'Failed',
-      );
-    } finally {
-      _isGeneratingAd = false;
-      notifyListeners();
-    }
-  }
-
   // UPDATED: Now passes language to backend
   Future<bool> startVideoGeneration() async {
     if (_scannedProduct == null) return false;
@@ -149,15 +96,13 @@ class AppProvider with ChangeNotifier {
     print("--- API Call to startVideoGenerationJob ---");
     print("Product: ${_scannedProduct!.name}");
     print("Context: $_marketingContext");
-    print("Language: $_selectedLanguage");
     print("------------------------------------------");
 
     // UPDATED: Now includes language parameter
     final jobId = await ApiService.startVideoGenerationJob(
-        product: _scannedProduct!,
-        context: _marketingContext,
-        language: _selectedLanguage // NEW: Passing language to backend
-        );
+      product: _scannedProduct!,
+      context: _marketingContext,
+    );
 
     if (jobId != null) {
       goToTab(3); // Immediately go to the results screen to show progress
@@ -202,6 +147,7 @@ class AppProvider with ChangeNotifier {
               title: 'New Ad Generated',
               subtitle: _scannedProduct?.name ?? 'Custom Product',
               time: 'Just now'));
+          print("Final Video URL: $_generatedVideoUrl");
         } else if (status == 'FAILED') {
           _generationStatus = "Video generation failed.";
           _error = "The backend process failed during generation.";
@@ -228,9 +174,6 @@ class AppProvider with ChangeNotifier {
     _error = null;
     _storeImage = null;
     _selectedCity = null;
-    _selectedLanguage = null;
-    _adResult = null; // NEW: Reset ad result
-    _isGeneratingAd = false; // NEW: Reset ad generation state
     goToTab(0);
     notifyListeners();
   }
